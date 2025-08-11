@@ -1,0 +1,29 @@
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/svelte": "^4.0.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@tsconfig/svelte": "^5.0.4",
+    "@types/jest": "^29.0.0",
+    "jsdom": "^26.1.0",
+    "svelte": "^4.0.0",
+    "svelte-check": "^3.0.0",
+    "typescript": "~5.8.3",
+    "vite": "^5.0.0",
+    "vitest": "^3.2.4"
+  }
+}

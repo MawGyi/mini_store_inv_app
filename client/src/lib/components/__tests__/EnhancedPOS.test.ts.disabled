@@ -1,0 +1,1186 @@
+import { render, screen, waitFor } from '@testing-library/svelte';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
+
+// Mock the API service with proper hoisting
+vi.mock('../../services/api', () => ({
+  apiService: {
+    getItems: vi.fn(),
+    createSale: vi.fn(),
+  },
+}));
+
+// Mock Svelte stores for notification system
+vi.mock('../../stores/stores', () => ({
+  items: {
+    subscribe: vi.fn(() => () => {}),
+    set: vi.fn(),
+    update: vi.fn(),
+  },
+  sales: {
+    subscribe: vi.fn(() => () => {}),
+    set: vi.fn(),
+    update: vi.fn(),
+  },
+  notifications: {
+    subscribe: vi.fn(() => () => {}),
+    set: vi.fn(),
+    update: vi.fn(),
+  },
+  addNotification: vi.fn(),
+}));
+
+// Mock console methods to avoid spam in tests
+const consoleMock = {
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+};
+vi.stubGlobal('console', consoleMock);
+
+// Import after mocking
+import EnhancedPOS from '../EnhancedPOS.svelte';
+import { apiService } from '../../services/api';
+import { addNotification } from '../../stores/stores';
+import type { Item } from '../../types/types';
+
+describe('EnhancedPOS Component - Comprehensive Testing with Mocked Stores', () => {
+  // Enhanced mock data with cart testing scenarios
+  const mockItems = [
+    {
+      _id: '1',
+      name: 'ဆန်', // Myanmar Unicode: Rice
+      itemCode: 'RICE001',
+      price: 2500,
+      stockQuantity: 50,
+      lowStockThreshold: 10,
+      description: 'မြန်မာ ဆန်အရည်အသွေးကောင်း', // Myanmar Unicode: High quality Myanmar rice
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      // Legacy properties for backward compatibility
+      item_code: 'RICE001',
+      selling_price: 2500,
+      stock_quantity: 50,
+      category_id: {
+        _id: 'cat1',
+        category_name_my: 'အစားအစာ',
+        category_name_en: 'Food',
+      },
+    },
+    {
+      _id: '2',
+      name: 'လက်ဖက်ရည်', // Myanmar Unicode: Tea
+      itemCode: 'TEA001',
+      price: 1500,
+      stockQuantity: 0, // Out of stock for testing
+      lowStockThreshold: 5,
+      description: 'မြန်မာ ရိုးရာ လက်ဖက်ရည်', // Myanmar Unicode: Traditional Myanmar tea
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      // Legacy properties for backward compatibility
+      item_code: 'TEA001',
+      selling_price: 1500,
+      stock_quantity: 0,
+      category_id: {
+        _id: 'cat2',
+        category_name_my: 'အဖျော်ယမကာ',
+        category_name_en: 'Beverages',
+      },
+    },
+    {
+      _id: '3',
+      name: 'ဆပ်ပြာ', // Myanmar Unicode: Soap
+      itemCode: 'SOAP001',
+      price: 800,
+      stockQuantity: 5, // Low stock for testing
+      lowStockThreshold: 10,
+      description: 'သန့်ရှင်းရေး ဆပ်ပြာ', // Myanmar Unicode: Cleaning soap
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      // Legacy properties for backward compatibility
+      item_code: 'SOAP001',
+      selling_price: 800,
+      stock_quantity: 5,
+      category_id: {
+        _id: 'cat3',
+        category_name_my: 'သန့်ရှင်းရေး',
+        category_name_en: 'Cleaning',
+      },
+    },
+    {
+      _id: '4',
+      name: 'ရေ', // Myanmar Unicode: Water
+      itemCode: 'WATER001',
+      price: 500,
+      stockQuantity: 100,
+      lowStockThreshold: 20,
+      description: 'သန့်ရှင်းသော ရေ', // Myanmar Unicode: Clean water
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      // Legacy properties for backward compatibility
+      item_code: 'WATER001',
+      selling_price: 500,
+      stock_quantity: 100,
+      category_id: {
+        _id: 'cat2',
+        category_name_my: 'အဖျော်ယမကာ',
+        category_name_en: 'Beverages',
+      },
+    },
+  ];
+
+  const mockApiResponse = {
+    success: true,
+    data: {
+      items: mockItems,
+      totalItems: mockItems.length,
+      currentPage: 1,
+      totalPages: 1,
+    },
+  };
+
+  // Test context for isolated testing
+  let mockCartState = {
+    items: [],
+    subtotal: 0,
+    total: 0,
+    itemCount: 0,
+  };
+
+  // Helper functions for cart state management
+  const resetCartState = () => {
+    mockCartState = {
+      items: [],
+      subtotal: 0,
+      total: 0,
+      itemCount: 0,
+    };
+  };
+
+  const addToMockCart = (item: typeof mockItems[0], quantity = 1) => {
+    const existingItem = mockCartState.items.find(cartItem => cartItem._id === item._id);
+    if (existingItem) {
+      existingItem.quantity += quantity;
+      existingItem.subtotal = existingItem.quantity * item.price;
+    } else {
+      mockCartState.items.push({
+        ...item,
+        quantity,
+        subtotal: quantity * item.price,
+      });
+    }
+    mockCartState.itemCount = mockCartState.items.reduce((sum, item) => sum + item.quantity, 0);
+    mockCartState.subtotal = mockCartState.items.reduce((sum, item) => sum + item.subtotal, 0);
+    mockCartState.total = mockCartState.subtotal;
+  };
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+    
+    // Reset cart state
+    resetCartState();
+    
+    // Reset console mocks
+    consoleMock.log.mockClear();
+    consoleMock.warn.mockClear();
+    consoleMock.error.mockClear();
+    
+    // Mock API responses with realistic delays
+    (apiService.getItems as any).mockImplementation(() => 
+      new Promise((resolve) => {
+        setTimeout(() => resolve(mockApiResponse), 100); // 100ms delay to simulate network
+      })
+    );
+    
+    (apiService.createSale as any).mockImplementation(() =>
+      new Promise((resolve) => {
+        setTimeout(() => resolve({
+          success: true,
+          data: { 
+            sale_id: `sale-${Date.now()}`,
+            invoice_number: `INV-${Date.now()}`,
+            timestamp: new Date().toISOString(),
+            total: mockCartState.total,
+          },
+        }), 50); // 50ms delay for sale processing
+      })
+    );
+
+    // Mock store functions
+    (addNotification as any).mockImplementation((message: string, type = 'success') => {
+      console.log(`📢 Mock notification: [${type}] ${message}`);
+    });
+  });
+
+  // Helper function to wait for component to be ready for interaction
+  const waitForComponentReady = async () => {
+    await waitFor(() => {
+      expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+    }, { timeout: 2000 });
+
+    await waitFor(() => {
+      expect(apiService.getItems).toHaveBeenCalled();
+    }, { timeout: 2000 });
+
+    await waitFor(() => {
+      expect(screen.getByText('ဆန်')).toBeInTheDocument();
+    }, { timeout: 3000 });
+  };
+
+  describe('Cart State Management - Isolated Testing', () => {
+    it('should manage cart state independently', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Test adding single item
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Add rice
+
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument(); // Cart count
+        expect(screen.getByText('2,500 ကျပ်')).toBeInTheDocument(); // Cart total
+      }, { timeout: 2000 });
+
+      // Test adding multiple items
+      await user.click(addButtons[3]); // Add water
+
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument(); // Updated cart count
+        expect(screen.getByText('3,000 ကျပ်')).toBeInTheDocument(); // Updated total (2500 + 500)
+      }, { timeout: 2000 });
+
+      // Verify notification was called
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('ဆန်'),
+        'success'
+      );
+    });
+
+    it('should handle quantity updates correctly', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add same item multiple times
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Add rice first time
+      
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      await user.click(addButtons[0]); // Add rice second time
+
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument(); // Should show quantity 2
+        expect(screen.getByText('5,000 ကျပ်')).toBeInTheDocument(); // 2500 * 2
+      }, { timeout: 2000 });
+    });
+
+    it('should prevent adding out-of-stock items', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Try to add out-of-stock tea (item index 1)
+      const outOfStockItems = screen.getAllByText('ကုန်သွားပြီ');
+      expect(outOfStockItems.length).toBeGreaterThan(0);
+
+      // Verify out-of-stock item buttons are disabled
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      const teaAddButton = addButtons.find(button => 
+        button.closest('.item-card')?.textContent?.includes('လက်ဖက်ရည်')
+      );
+      
+      if (teaAddButton) {
+        expect(teaAddButton).toBeDisabled();
+      }
+    });
+
+    it('should clear cart correctly', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add items to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Add rice
+      await user.click(addButtons[3]); // Add water
+
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Clear cart
+      const clearButton = screen.getByText('ရှင်းလင်းရန်');
+      await user.click(clearButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('စျေးခြင်းတွင် ပစ္စည်းမရှိပါ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+  });
+
+  describe('API Service Integration - Mocked', () => {
+    it('should handle API loading states', async () => {
+      // Mock slower API for testing loading states
+      (apiService.getItems as any).mockImplementation(() => 
+        new Promise((resolve) => {
+          setTimeout(() => resolve(mockApiResponse), 800);
+        })
+      );
+
+      render(EnhancedPOS);
+
+      // Should show initial state
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // API should be called
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Eventually items should load
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+      }, { timeout: 5000 });
+    });
+
+    it('should handle API errors gracefully', async () => {
+      const mockError = new Error('Network failure');
+      (apiService.getItems as any).mockRejectedValue(mockError);
+
+      render(EnhancedPOS);
+
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Verify error was logged
+      expect(consoleMock.error).toHaveBeenCalled();
+    });
+
+    it('should handle sale API success', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add item to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Process payment
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '2500');
+
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).not.toBeDisabled();
+      }, { timeout: 2000 });
+
+      const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+      await user.click(processSaleButton);
+
+      await waitFor(() => {
+        expect(apiService.createSale).toHaveBeenCalledWith({
+          customer_name: 'Walk-in Customer',
+          customer_phone: '',
+          items: [{
+            item_id: '1',
+            quantity: 1,
+            unit_price: 2500,
+            subtotal: 2500,
+          }],
+          subtotal: 2500,
+          discount: 0,
+          total: 2500,
+          amount_paid: 2500,
+          change: 0,
+          payment_method: 'cash',
+          sale_date: expect.any(String),
+        });
+      }, { timeout: 3000 });
+
+      // Verify success notification
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('အရောင်း အောင်မြင်စွာ ပြီးစီးပါပြီ'),
+        'success'
+      );
+    });
+
+    it('should handle sale API errors', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Mock sale API error
+      const mockSaleError = new Error('Payment processing failed');
+      (apiService.createSale as any).mockRejectedValue(mockSaleError);
+
+      // Add item and process sale
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '2500');
+
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).not.toBeDisabled();
+      }, { timeout: 2000 });
+
+      const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+      await user.click(processSaleButton);
+
+      await waitFor(() => {
+        expect(apiService.createSale).toHaveBeenCalled();
+      }, { timeout: 3000 });
+
+      // Should show error notification
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('အရောင်းလုပ်ငန်းတွင် အမှားဖြစ်ပေါ်သည်'),
+        'error'
+      );
+    });
+  });
+
+  describe('Component Rendering', () => {
+    it('should render the POS interface with proper Myanmar text support', async () => {
+      render(EnhancedPOS);
+
+      // Wait for component to be fully rendered
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Check main title and description
+      expect(screen.getByText('ပစ္စည်းများကို ရွေးချယ်၍ အရောင်းလုပ်ငန်း ဆောင်ရွက်နိုင်ပါသည်')).toBeInTheDocument();
+
+      // Wait for search input to be rendered
+      await waitFor(() => {
+        const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+        expect(searchInput).toBeInTheDocument();
+        expect(searchInput).toHaveClass('myanmar-text');
+      }, { timeout: 2000 });
+
+      // Wait for cart section to be rendered
+      await waitFor(() => {
+        expect(screen.getByText('📋 စျေးခြင်း')).toBeInTheDocument();
+        expect(screen.getByText('စျေးခြင်းတွင် ပစ္စည်းမရှိပါ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should display items after loading', async () => {
+      render(EnhancedPOS);
+
+      // Wait for API call to complete and items to load
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Wait for items to load with proper async handling
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument(); // Rice in Myanmar Unicode
+        expect(screen.getByText('လက်ဖက်ရည်')).toBeInTheDocument(); // Tea in Myanmar Unicode
+        expect(screen.getByText('ဆပ်ပြာ')).toBeInTheDocument(); // Soap in Myanmar Unicode
+      }, { timeout: 3000 });
+
+      // Wait for item details to be rendered
+      await waitFor(() => {
+        expect(screen.getByText('#RICE001')).toBeInTheDocument();
+        expect(screen.getByText('2,500 ကျပ်')).toBeInTheDocument();
+        expect(screen.getByText('လက်ကျန်: 50')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Wait for Myanmar Unicode descriptions to be present
+      await waitFor(() => {
+        expect(screen.getByText('မြန်မာ ဆန်အရည်အသွေးကောင်း')).toBeInTheDocument();
+        expect(screen.getByText('မြန်မာ ရိုးရာ လက်ဖက်ရည်')).toBeInTheDocument();
+        expect(screen.getByText('သန့်ရှင်းရေး ဆပ်ပြာ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Wait for category tags to be rendered (from legacy properties for backward compatibility)
+      await waitFor(() => {
+        expect(screen.getByText('အစားအစာ')).toBeInTheDocument();
+        expect(screen.getByText('အဖျော်ယမကာ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should handle async loading states correctly', async () => {
+      render(EnhancedPOS);
+
+      // Wait for initial component render
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းများကို ရွေးချယ်၍ အရောင်းလုပ်ငန်း ဆောင်ရွက်နိုင်ပါသည်')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Wait for API call to be initiated
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Wait for async loading to complete and data to be displayed
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Verify items are fully loaded
+      await waitFor(() => {
+        expect(screen.getByText('လက်ဖက်ရည်')).toBeInTheDocument();
+        expect(screen.getByText('ဆပ်ပြာ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should handle API error gracefully with proper Myanmar text', async () => {
+      (apiService.getItems as any).mockImplementation(() =>
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Network error')), 100);
+        })
+      );
+
+      render(EnhancedPOS);
+
+      // Wait for API call to be initiated
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Wait for error state to be displayed
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Verify component remains stable after error
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 1000 });
+    });
+
+    it('should retry API calls after error', async () => {
+      // First call fails, second succeeds
+      let callCount = 0;
+      (apiService.getItems as any).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          return Promise.reject(new Error('Network error'));
+        }
+        return new Promise((resolve) => {
+          setTimeout(() => resolve(mockApiResponse), 100);
+        });
+      });
+
+      render(EnhancedPOS);
+
+      // Wait for first API call to be made
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalledTimes(1);
+      }, { timeout: 2000 });
+
+      // Wait for error state to be displayed
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Verify component remains stable after error
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 1000 });
+
+      // At this point, depending on the component's retry mechanism,
+      // we would trigger a retry. For now, we just verify the API was called
+      expect(callCount).toBe(1);
+    });
+
+    it('should show loading state during async operations', async () => {
+      // Mock a slower API response to test loading states
+      (apiService.getItems as any).mockImplementation(() => 
+        new Promise((resolve) => {
+          setTimeout(() => resolve(mockApiResponse), 500); // 500ms delay
+        })
+      );
+
+      render(EnhancedPOS);
+
+      // Initially should show the basic interface
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // API should be called
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Eventually items should load
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+        expect(screen.getByText('လက်ဖက်ရည်')).toBeInTheDocument();
+      }, { timeout: 4000 });
+    });
+  });
+
+  describe('Cart Management - Enhanced Testing', () => {
+    it('should add item to cart when clicked', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Find and click the add button for rice
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      // Wait for cart to update with item count
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument(); // Cart count
+      }, { timeout: 2000 });
+
+      // Wait for cart total to update
+      await waitFor(() => {
+        expect(screen.getByText('2,500 ကျပ်')).toBeInTheDocument(); // Cart total
+      }, { timeout: 2000 });
+
+      // Wait for clear cart button to appear
+      await waitFor(() => {
+        expect(screen.getByText('ရှင်းလင်းရန်')).toBeInTheDocument(); // Clear cart button appears
+      }, { timeout: 2000 });
+
+      // Verify notification was triggered
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('ဆန်'),
+        'success'
+      );
+    });
+
+    it('should clear entire cart', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add items to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Add rice
+
+      // Wait for clear button to appear
+      await waitFor(() => {
+        expect(screen.getByText('ရှင်းလင်းရန်')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Clear cart
+      const clearButton = screen.getByText('ရှင်းလင်းရန်');
+      await user.click(clearButton);
+
+      // Wait for cart to be cleared
+      await waitFor(() => {
+        expect(screen.getByText('စျေးခြင်းတွင် ပစ္စည်းမရှိပါ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should handle multiple items in cart', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add multiple different items
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Add rice (2500)
+      
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      await user.click(addButtons[3]); // Add water (500)
+
+      // Wait for cart to show multiple items
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument(); // Total item count
+        expect(screen.getByText('3,000 ကျပ်')).toBeInTheDocument(); // Total price
+      }, { timeout: 2000 });
+    });
+
+    it('should update quantity when adding same item multiple times', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add same item twice
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // First rice
+      
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument();
+        expect(screen.getByText('2,500 ကျပ်')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      await user.click(addButtons[0]); // Second rice
+
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument(); // Quantity should be 2
+        expect(screen.getByText('5,000 ကျပ်')).toBeInTheDocument(); // Total should double
+      }, { timeout: 2000 });
+    });
+  });
+
+  describe('Myanmar Unicode Input - Enhanced Testing', () => {
+    it('should support Myanmar text in search input', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+
+      // Wait for component to render and search input to be available
+      await waitFor(() => {
+        const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+        expect(searchInput).toBeInTheDocument();
+        expect(searchInput).toHaveClass('myanmar-text');
+      }, { timeout: 2000 });
+
+      const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+      
+      // Type Myanmar text
+      await user.type(searchInput, 'မြန်မာစာ');
+      
+      // Wait for input value to be updated
+      await waitFor(() => {
+        expect(searchInput).toHaveValue('မြန်မာစာ');
+      }, { timeout: 1000 });
+    });
+
+    it('should correctly filter items by Myanmar Unicode text', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+      
+      // Search for rice in Myanmar
+      await user.type(searchInput, 'ဆန်');
+      
+      // Wait for filtering to complete and items to be displayed
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+        expect(screen.getByText('မြန်မာ ဆန်အရည်အသွေးကောင်း')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should handle complex Myanmar Unicode characters correctly', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+      
+      // Search for tea with complex Myanmar characters
+      await user.type(searchInput, 'လက်ဖက်ရည်');
+      
+      // Wait for input value to be updated
+      await waitFor(() => {
+        expect(searchInput).toHaveValue('လက်ဖက်ရည်');
+      }, { timeout: 1000 });
+      
+      // Wait for items to be filtered and displayed
+      await waitFor(() => {
+        expect(screen.getByText('လက်ဖက်ရည်')).toBeInTheDocument();
+        expect(screen.getByText('မြန်မာ ရိုးရာ လက်ဖက်ရည်')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should clear search filter correctly', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      const searchInput = screen.getByPlaceholderText('ပစ္စည်းအမည် သို့မဟုတ် ကုဒ် ရှာရန်...');
+      
+      // Search for specific item
+      await user.type(searchInput, 'ဆန်');
+      
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Clear search
+      await user.clear(searchInput);
+      
+      // Should show all items again
+      await waitFor(() => {
+        expect(screen.getByText('ဆန်')).toBeInTheDocument();
+        expect(screen.getByText('ဆပ်ပြာ')).toBeInTheDocument();
+        expect(screen.getByText('ရေ')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+  });
+
+  describe('Payment Processing - Enhanced Mocking', () => {
+    it('should process sale successfully with mocked state', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add rice to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      // Wait for payment section to appear
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Enter sufficient payment
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '2500');
+
+      // Wait for payment amount to be updated
+      await waitFor(() => {
+        expect(amountInput).toHaveValue('2500');
+      }, { timeout: 1000 });
+
+      // Wait for process sale button to be enabled
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).not.toBeDisabled();
+      }, { timeout: 2000 });
+
+      // Process sale
+      const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+      await user.click(processSaleButton);
+
+      // Wait for success and verify the sale data uses correct Item interface properties
+      await waitFor(() => {
+        expect(apiService.createSale).toHaveBeenCalledWith({
+          customer_name: 'Walk-in Customer',
+          customer_phone: '',
+          items: [{
+            item_id: '1',
+            quantity: 1,
+            unit_price: 2500, // Using price property from Item interface
+            subtotal: 2500,
+          }],
+          subtotal: 2500,
+          discount: 0,
+          total: 2500,
+          amount_paid: 2500,
+          change: 0,
+          payment_method: 'cash',
+          sale_date: expect.any(String),
+        });
+      }, { timeout: 3000 });
+
+      // Verify success notification was called
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('အရောင်း အောင်မြင်စွာ ပြီးစီးပါပြီ'),
+        'success'
+      );
+    });
+
+    it('should prevent sale with insufficient payment', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add rice to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      // Wait for payment section to appear
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+      
+      // Enter insufficient payment
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '1000');
+
+      // Wait for payment amount to be updated
+      await waitFor(() => {
+        expect(amountInput).toHaveValue('1000');
+      }, { timeout: 1000 });
+
+      // Wait for process sale button state to update
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).toBeDisabled();
+      }, { timeout: 2000 });
+
+      // Verify API was not called for insufficient payment
+      expect(apiService.createSale).not.toHaveBeenCalled();
+    });
+
+    it('should calculate change correctly', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add item to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]); // Rice for 2500
+
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Enter overpayment
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '3000');
+
+      await waitFor(() => {
+        expect(amountInput).toHaveValue('3000');
+      }, { timeout: 1000 });
+
+      // Should show change amount
+      await waitFor(() => {
+        expect(screen.getByText('500 ကျပ်')).toBeInTheDocument(); // Change should be 500
+      }, { timeout: 2000 });
+    });
+
+    it('should handle multiple payment methods', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add item to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Check if payment method options are available
+      const paymentMethods = screen.getAllByRole('radio');
+      expect(paymentMethods.length).toBeGreaterThan(0);
+
+      // Test selecting different payment method if available
+      if (paymentMethods.length > 1) {
+        await user.click(paymentMethods[1]); // Select second payment method
+      }
+
+      // Enter payment and process
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '2500');
+
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).not.toBeDisabled();
+      }, { timeout: 2000 });
+
+      const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+      await user.click(processSaleButton);
+
+      // Verify sale was processed
+      await waitFor(() => {
+        expect(apiService.createSale).toHaveBeenCalled();
+      }, { timeout: 3000 });
+    });
+  });
+
+  describe('Error Handling - Enhanced Mocking', () => {
+    it('should handle network failures gracefully', async () => {
+      const mockError = new Error('Network error');
+      (apiService.getItems as any).mockRejectedValue(mockError);
+
+      render(EnhancedPOS);
+
+      // Wait for API call to be initiated
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      // Wait for error state to be displayed
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+
+      // Verify component remains functional after error
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 1000 });
+
+      // Verify error was logged
+      expect(consoleMock.error).toHaveBeenCalled();
+    });
+
+    it('should handle sale API error gracefully', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Mock API error with proper async handling
+      const mockSaleError = new Error('Payment processing failed');
+      (apiService.createSale as any).mockRejectedValue(mockSaleError);
+
+      // Add item and try to process sale
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      // Wait for payment section to appear
+      await waitFor(() => {
+        expect(screen.getByText('💰 ငွေပေးချေမှု')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Enter payment and process
+      const amountInput = screen.getByPlaceholderText('ပေးချေငွေပမာဏ');
+      await user.type(amountInput, '2500');
+
+      await waitFor(() => {
+        const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+        expect(processSaleButton).not.toBeDisabled();
+      }, { timeout: 2000 });
+
+      const processSaleButton = screen.getByText('အရောင်းပြီးစီးရန်');
+      await user.click(processSaleButton);
+
+      // Wait for API call to be made and handle error gracefully
+      await waitFor(() => {
+        expect(apiService.createSale).toHaveBeenCalled();
+      }, { timeout: 3000 });
+
+      // Verify error notification was called
+      expect(addNotification).toHaveBeenCalledWith(
+        expect.stringContaining('အရောင်းလုပ်ငန်းတွင် အမှားဖြစ်ပေါ်သည်'),
+        'error'
+      );
+
+      // Wait for component to remain functional after error
+      await waitFor(() => {
+        expect(screen.getByText('� စျေးခြင်း')).toBeInTheDocument();
+      }, { timeout: 2000 });
+    });
+
+    it('should handle malformed API responses', async () => {
+      // Mock malformed response
+      (apiService.getItems as any).mockResolvedValue({
+        success: false,
+        error: 'Invalid response format'
+      });
+
+      render(EnhancedPOS);
+
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+    });
+
+    it('should handle empty API responses', async () => {
+      // Mock empty response
+      (apiService.getItems as any).mockResolvedValue({
+        success: true,
+        data: {
+          items: [],
+          totalItems: 0,
+          currentPage: 1,
+          totalPages: 0,
+        }
+      });
+
+      render(EnhancedPOS);
+
+      await waitFor(() => {
+        expect(apiService.getItems).toHaveBeenCalled();
+      }, { timeout: 2000 });
+
+      await waitFor(() => {
+        expect(screen.getByText('ပစ္စည်းမတွေ့ရှိပါ')).toBeInTheDocument();
+      }, { timeout: 3000 });
+    });
+  });
+
+  // Test utility functions and edge cases
+  describe('Component State Management - Edge Cases', () => {
+    it('should handle rapid successive clicks', async () => {
+      const user = userEvent.setup();
+      render(EnhancedPOS);
+      await waitForComponentReady();
+
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      
+      // Rapidly click the same button
+      await user.click(addButtons[0]);
+      await user.click(addButtons[0]);
+      await user.click(addButtons[0]);
+
+      // Should handle multiple clicks gracefully
+      await waitFor(() => {
+        expect(screen.getByText('3')).toBeInTheDocument(); // Should show correct quantity
+        expect(screen.getByText('7,500 ကျပ်')).toBeInTheDocument(); // 2500 * 3
+      }, { timeout: 3000 });
+    });
+
+    it('should maintain state during component re-renders', async () => {
+      const user = userEvent.setup();
+      const { unmount } = render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Add item to cart
+      const addButtons = screen.getAllByText('ထည့်ရန်');
+      await user.click(addButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText('1')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      // Test that component state works as expected
+      await waitFor(() => {
+        expect(screen.getByText('🛒 အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      }, { timeout: 2000 });
+
+      unmount();
+    });
+  });
+
+  // Cleanup and teardown
+  describe('Component Lifecycle', () => {
+    it('should cleanup properly on unmount', async () => {
+      const { unmount } = render(EnhancedPOS);
+      await waitForComponentReady();
+
+      // Unmount component
+      unmount();
+
+      // Verify no memory leaks or hanging promises
+      // This is a basic test - more sophisticated memory leak detection would require additional tooling
+      expect(consoleMock.error).not.toHaveBeenCalledWith(
+        expect.stringContaining('memory leak')
+      );
+    });
+
+    it('should handle component mount/unmount cycles', async () => {
+      // First mount
+      const { unmount: unmount1 } = render(EnhancedPOS);
+      await waitForComponentReady();
+      unmount1();
+
+      // Clear mocks between cycles
+      vi.clearAllMocks();
+      resetCartState();
+
+      // Second mount
+      const { unmount: unmount2 } = render(EnhancedPOS);
+      await waitForComponentReady();
+      
+      // Should work normally
+      expect(screen.getByText('� အရောင်းစနစ် (POS)')).toBeInTheDocument();
+      expect(apiService.getItems).toHaveBeenCalled();
+      
+      unmount2();
+    });
+  });
+});

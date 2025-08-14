@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Myanmar Grocery Store - Frontend Integration Demo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Myanmar:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans Myanmar', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Noto Sans Myanmar', Arial, sans-serif;
+            font-size: 16px;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+
+        .nav-tab:hover {
+            background: #f8f9fa;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .demo-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .demo-header h3 {
+            margin: 0;
+            color: #333;
+        }
+
+        .demo-content {
+            padding: 20px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .component-demo {
+            margin-bottom: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .nav-tab {
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .nav-tab.active {
+                border-bottom-color: #007bff;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Myanmar Grocery Store - Frontend Integration Demo</h1>
+        <p>POS System, Dashboard, and Inventory Management</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+        <button class="nav-tab" data-tab="pos">POS System</button>
+        <button class="nav-tab" data-tab="inventory">Inventory Management</button>
+    </nav>
+
+    <main>
+        <!-- Dashboard Tab -->
+        <div class="tab-content active" id="dashboard-tab">
+            <div class="demo-section">
+                <div class="demo-header">
+                    <h3>📊 Business Dashboard</h3>
+                </div>
+                <div class="demo-content">
+                    <div class="info-box">
+                        <h4>Features:</h4>
+                        <ul>
+                            <li>Real-time sales metrics</li>
+                            <li>Stock alerts and low inventory warnings</li>
+                            <li>Top selling products</li>
+                            <li>Recent sales tracking</li>
+                            <li>Auto-refresh functionality</li>
+                        </ul>
+                    </div>
+                    <div id="dashboard-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POS Tab -->
+        <div class="tab-content" id="pos-tab">
+            <div class="demo-section">
+                <div class="demo-header">
+                    <h3>🏪 Point of Sale System</h3>
+                </div>
+                <div class="demo-content">
+                    <div class="info-box">
+                        <h4>Features:</h4>
+                        <ul>
+                            <li>Real-time item search with debounce</li>
+                            <li>Sale transaction processing</li>
+                            <li>Stock validation</li>
+                            <li>Receipt generation</li>
+                            <li>Myanmar Unicode support</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="component-demo">
+                        <h4>Item Search</h4>
+                        <div id="pos-search-container"></div>
+                    </div>
+
+                    <div class="component-demo">
+                        <h4>Sale Transaction</h4>
+                        <div id="pos-transaction-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Tab -->
+        <div class="tab-content" id="inventory-tab">
+            <div class="demo-section">
+                <div class="demo-header">
+                    <h3>📦 Inventory Management</h3>
+                </div>
+                <div class="demo-content">
+                    <div class="info-box">
+                        <h4>Features:</h4>
+                        <ul>
+                            <li>Add new items with validation</li>
+                            <li>Edit existing items</li>
+                            <li>Category management</li>
+                            <li>Stock level tracking</li>
+                            <li>Expiry date management</li>
+                        </ul>
+                    </div>
+                    <div id="inventory-form-container"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Myanmar Grocery Store Management System. All rights reserved.</p>
+    </footer>
+
+    <!-- Import our components -->
+    <script type="module">
+        import DashboardDisplay from './DashboardDisplay.js';
+        import POSItemSearch from './POSItemSearch.js';
+        import SaleTransaction from './SaleTransaction.js';
+        import InventoryManagementForm from './InventoryManagementForm.js';
+
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.nav-tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                // Update active tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update active content
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+                
+                // Initialize components when tabs are shown
+                if (targetTab === 'dashboard' && !window.dashboard) {
+                    window.dashboard = new DashboardDisplay('dashboard-container');
+                } else if (targetTab === 'pos') {
+                    if (!window.posSearch) {
+                        window.posSearch = new POSItemSearch('pos-search-container', (item) => {
+                            console.log('Selected item:', item);
+                            // This would typically add to cart
+                        });
+                    }
+                    if (!window.posTransaction) {
+                        window.posTransaction = new SaleTransaction('pos-transaction-container');
+                    }
+                } else if (targetTab === 'inventory' && !window.inventoryForm) {
+                    window.inventoryForm = new InventoryManagementForm('inventory-form-container');
+                    
+                    // Listen for saved events
+                    document.getElementById('inventory-form-container').addEventListener('itemSaved', (e) => {
+                        console.log('Item saved:', e.detail);
+                        // Refresh dashboard if available
+                        if (window.dashboard) {
+                            window.dashboard.loadDashboardData();
+                        }
+                    });
+                }
+            });
+        });
+
+        // Initialize dashboard on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            window.dashboard = new DashboardDisplay('dashboard-container');
+        });
+
+        // Handle errors globally
+        window.addEventListener('error', (e) => {
+            console.error('Application error:', e.error);
+        });
+
+        // Check if backend is running
+        fetch('http://localhost:3001/api/health')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Backend is running:', data);
+            })
+            .catch(error => {
+                console.warn('Backend might not be running. Please start the server with: npm run dev');
+                alert('Backend server is not running. Please start it with: npm run dev');
+            });
+    </script>
+</body>
+</html>

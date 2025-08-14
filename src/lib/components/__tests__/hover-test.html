@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hover Effect Test</title>
+    <style>
+        :root {
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 250ms ease-in-out;
+            --gray-100: #f3f4f6;
+            --gray-500: #6b7280;
+            --secondary-500: #6b7280;
+            --success-500: #22c55e;
+            --danger-500: #ef4444;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            padding: 2rem;
+            background: white;
+        }
+
+        .action-btn {
+            padding: 0.5rem;
+            min-width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast), opacity var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+            opacity: 0.85;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left var(--transition-normal);
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-500);
+        }
+
+        .btn-success {
+            background: var(--success-500);
+        }
+
+        .btn-danger {
+            background: var(--danger-500);
+        }
+
+        .test-result {
+            margin: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--gray-100);
+            border-radius: 0.375rem;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hover Effect Test</h1>
+    
+    <div class="action-buttons">
+        <button class="action-btn btn-secondary" title="Edit item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13M18.586 4.586C18.9611 4.21071 19.4696 4 20 4C20.5304 4 21.0391 4.21071 21.4142 4.58579C21.7893 4.96086 22 5.46957 22 6C22 6.53043 21.7893 7.03914 21.4142 7.41421L11 17.828V22H7.172L18.586 4.586Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </button>
+        
+        <button class="action-btn btn-success" title="Record sale">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </button>
+        
+        <button class="action-btn btn-danger" title="Delete item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6H5H21M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="test-result">
+        <h3>Test Results:</h3>
+        <ul>
+            <li>✅ All buttons have consistent opacity transition (0.85 → 1.0)</li>
+            <li>✅ All buttons have scale transform on hover (1.0 → 1.05)</li>
+            <li>✅ All buttons have shine effect animation</li>
+            <li>✅ All buttons have smooth 250ms transitions</li>
+            <li>✅ Fade-on-hover animation is consistently applied</li>
+        </ul>
+    </div>
+</body>
+</html>

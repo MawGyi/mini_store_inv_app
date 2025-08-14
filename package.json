@@ -1,0 +1,44 @@
+{
+  "name": "mini-store-inventory-app",
+  "version": "1.0.0",
+  "description": "A comprehensive inventory management system for mini stores with Myanmar language support",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "preview": "cd client && npm run preview",
+    "install:all": "npm ci && cd client && npm ci && cd ../server && npm ci",
+    "test": "cd server && npm test && cd ../client && npm test",
+    "test:coverage": "cd server && npm run test:coverage && cd ../client && npm run test:coverage",
+    "lint": "cd client && npm run check && cd ../server && npm run lint",
+    "clean": "rm -rf node_modules client/node_modules server/node_modules client/dist server/dist"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MawGyi/mini_store_inv_app.git"
+  },
+  "keywords": [
+    "inventory",
+    "management",
+    "pos",
+    "myanmar",
+    "store",
+    "svelte",
+    "typescript",
+    "express"
+  ],
+  "author": "MawGyi",
+  "license": "MIT"
+}

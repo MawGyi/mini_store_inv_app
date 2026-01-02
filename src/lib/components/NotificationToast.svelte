@@ -10,7 +10,7 @@
   
   let visible = false;
   let progress = 100;
-  let progressInterval: number;
+  let progressInterval: ReturnType<typeof setInterval>;
   
   onMount(() => {
     // Animate in

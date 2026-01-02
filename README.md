@@ -1,47 +1,262 @@
-# Svelte + TS + Vite
+# Mini Store Inventory Management System
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+A modern, full-stack inventory management application built with SvelteKit, featuring real-time stock tracking, sales management, and multi-currency support.
 
-## Recommended IDE Setup
+![Mini Store Inventory](https://via.placeholder.com/1200x630?text=Mini+Store+Inventory+Management)
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## Features
 
-## Need an official Svelte framework?
+### Core Functionality
+- **Dashboard** - Overview of sales, inventory stats, top-selling items, and stock alerts
+- **Inventory Management** - Full CRUD operations for items with search, filtering, and highlighting
+- **Sales Management** - Create sales, view transaction history, and print receipts
+- **Multi-Currency Support** - USD, EUR, GBP, THB, JPY, CNY, CAD, AUD, MMK
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+### User Experience
+- Responsive design for desktop and mobile
+- Dark mode capable (Tailwind CSS)
+- Real-time notifications
+- Keyboard-accessible interface
+- Smooth transitions and animations
 
-## Technical considerations
+### Technical Features
+- TypeScript for type safety
+- SQLite database with better-sqlite3
+- Svelte stores for state management
+- RESTful API endpoints
+- Local storage for user settings
 
-**Why use this over SvelteKit?**
+## Tech Stack
 
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
+| Layer | Technology |
+|-------|------------|
+| Frontend | SvelteKit + Svelte 4 |
+| Styling | Tailwind CSS |
+| Language | TypeScript |
+| Database | SQLite (better-sqlite3) |
+| Build Tool | Vite |
+| State Management | Svelte Stores |
 
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
+## Getting Started
 
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
+### Prerequisites
 
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
+- Node.js 18+ 
+- npm or pnpm
 
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
+### Installation
 
-**Why include `.vscode/extensions.json`?**
+```bash
+# Clone the repository
+git clone <repository-url>
+cd mini_store_inv_app
 
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
+# Install dependencies
+npm install
 
-**Why enable `allowJs` in the TS template?**
+# Start development server
+npm run dev
 
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
+# Build for production
+npm run build
 
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+# Preview production build
+npm run preview
 ```
+
+### Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database
+DB_PATH=sqlite.db
+
+# JWT Secret (change in production)
+JWT_SECRET=your-super-secret-key
+```
+
+## Project Structure
+
+```
+mini_store_inv_app/
+├── src/
+│   ├── lib/
+│   │   ├── components/          # Reusable Svelte components
+│   │   │   ├── AdvancedSearch.svelte
+│   │   │   ├── Dashboard.svelte
+│   │   │   ├── InventoryList.svelte
+│   │   │   ├── NotificationContainer.svelte
+│   │   │   └── NotificationToast.svelte
+│   │   ├── stores/              # Svelte stores
+│   │   │   ├── auth.ts          # Authentication state
+│   │   │   ├── settings.ts      # App settings (currency, timezone)
+│   │   │   └── stores.ts        # Notification store
+│   │   ├── types/               # TypeScript types
+│   │   │   └── index.ts
+│   │   └── server/              # Server-side code
+│   │       ├── db/              # Database configuration
+│   │       ├── init.ts          # Database initialization
+│   │       └── security.ts      # Security utilities
+│   ├── routes/
+│   │   ├── api/                 # API endpoints
+│   │   │   ├── auth/            # Authentication APIs
+│   │   │   ├── dashboard/       # Dashboard data APIs
+│   │   │   ├── items/           # Inventory item APIs
+│   │   │   └── sales/           # Sales transaction APIs
+│   │   ├── dashboard/           # Dashboard page
+│   │   ├── inventory/           # Inventory management page
+│   │   ├── sales/               # Sales management page
+│   │   ├── settings/            # Settings page
+│   │   ├── login/               # Login page
+│   │   ├── profile/             # User profile page
+│   │   └── +layout.svelte       # Main layout
+│   └── app.css                  # Global styles
+├── server/
+│   ├── controllers/             # Route controllers
+│   ├── models/                  # Data models
+│   ├── routes/                  # Express routes
+│   ├── utils/                   # Utility functions
+│   ├── tests/                   # Test files
+│   ├── index.js                 # Server entry point
+│   └── seed_data.js             # Sample data
+├── static/                      # Static assets
+├── .env                         # Environment variables
+├── package.json
+├── svelte.config.js
+├── vite.config.ts
+├── tailwind.config.js
+└── README.md
+```
+
+## API Reference
+
+### Items API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/items` | Get all items with pagination |
+| GET | `/api/items/:id` | Get single item by ID |
+| POST | `/api/items` | Create new item |
+| PUT | `/api/items/:id` | Update item |
+| DELETE | `/api/items/:id` | Delete item |
+
+### Sales API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sales` | Get all sales with pagination |
+| GET | `/api/sales/:id` | Get single sale by ID |
+| POST | `/api/sales` | Create new sale |
+| DELETE | `/api/sales/:id` | Delete sale |
+
+### Dashboard API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard/overview` | Get dashboard statistics |
+| GET | `/api/dashboard/alerts` | Get stock alerts |
+| GET | `/api/dashboard/sales-summary` | Get sales summary |
+| GET | `/api/dashboard/top-items` | Get top selling items |
+
+## Currency Settings
+
+Supported currencies:
+
+| Currency | Symbol | Code |
+|----------|--------|------|
+| US Dollar | $ | USD |
+| Euro | € | EUR |
+| British Pound | £ | GBP |
+| Canadian Dollar | C$ | CAD |
+| Australian Dollar | A$ | AUD |
+| Thai Baht | ฿ | THB |
+| Japanese Yen | ¥ | JPY |
+| Chinese Yuan | ¥ | CNY |
+| Myanmar Kyat | MMK | MMK |
+
+Currency settings are stored in localStorage and persist across sessions.
+
+## Development
+
+### Available Scripts
+
+```bash
+npm run dev        # Start development server
+npm run build      # Build for production
+npm run preview    # Preview production build
+npm run test       # Run tests
+npm run lint       # Run linting
+```
+
+### Database Schema
+
+**Items Table:**
+```sql
+CREATE TABLE items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  itemCode TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  price REAL NOT NULL,
+  stockQuantity INTEGER NOT NULL DEFAULT 0,
+  category TEXT,
+  unit TEXT DEFAULT 'Piece',
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+)
+```
+
+**Sales Table:**
+```sql
+CREATE TABLE sales (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customerName TEXT,
+  customerPhone TEXT,
+  totalAmount REAL NOT NULL,
+  paymentMethod TEXT,
+  notes TEXT,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP
+)
+```
+
+**SaleItems Table:**
+```sql
+CREATE TABLE saleItems (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  saleId INTEGER REFERENCES sales(id),
+  itemId INTEGER REFERENCES items(id),
+  itemName TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  unitPrice REAL NOT NULL,
+  totalPrice REAL NOT NULL
+)
+```
+
+## Default Credentials
+
+```
+Email: admin@ministore.com
+Password: admin123
+```
+
+**Note:** Change the default password in production!
+
+## License
+
+MIT License - feel free to use this project for personal or commercial purposes.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Support
+
+For issues and feature requests, please open a GitHub issue.

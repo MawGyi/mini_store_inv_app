@@ -11,7 +11,7 @@
   
   onMount(async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/items');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/items`);
       if (response.ok) {
         const fetchedItems = await response.json();
         items.set(fetchedItems);

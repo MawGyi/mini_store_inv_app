@@ -395,6 +395,23 @@ body {
 /* Form Group */
 /* (Removed duplicate - using professional styles above) */
 
+/* Currency Input Prefix Styles */
+.currency-input-wrapper {
+  @apply relative;
+}
+
+.currency-input-prefix {
+  @apply absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none;
+}
+
+.currency-input-short {
+  @apply pl-8;
+}
+
+.currency-input-long {
+  @apply pl-10;
+}
+
 /* Action Bar */
 .action-bar {
   @apply flex flex-wrap items-center gap-3 mb-6;

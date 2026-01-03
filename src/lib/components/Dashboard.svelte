@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { Sale } from '../types/types';
+  import type { Sale } from '$lib/types';
+  import { settings, formatCurrency, currencySymbol } from '$lib/stores/settings';
+
+  // Remove local formatCurrency - using imported one from settings
 
   let dailySales: Sale[] = [];
   let totalRevenue = 0;
@@ -13,6 +16,7 @@
   const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
   onMount(async () => {
+    settings.load();
     await fetchDashboardData();
   });
 
@@ -49,11 +53,6 @@
     } finally {
       loading = false;
     }
-  }
-
-  function formatCurrency(amount: number): string {
-    if (isNaN(amount)) return '';
-    return amount.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' MMK';
   }
 
   function formatTime(dateString: string): string {

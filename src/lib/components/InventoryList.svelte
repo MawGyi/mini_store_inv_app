@@ -1,9 +1,12 @@
 <script lang="ts">
-  import { items } from "../stores/stores";
-  import type { Item } from "../types/types";
+  import { items } from "$lib/stores";
+  import type { Item } from "$lib/types";
   import { onMount } from "svelte";
   import AdvancedSearch from "./AdvancedSearch.svelte";
   import SkeletonLoader from "./SkeletonLoader.svelte";
+  import { settings, formatCurrency, currencySymbol } from '$lib/stores/settings';
+
+  // Remove local formatCurrency - using imported one from settings
 
   let searchQuery = "";
   let filteredItems: Item[] = [];
@@ -141,17 +144,17 @@
       try {
         loading = true;
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/items/${item._id}`,
+          `${import.meta.env.VITE_API_URL}/api/items/${item.id}`,
           {
             method: "DELETE",
           },
         );
 
-        if (response.ok) {
-          // Remove from store
-          items.update((currentItems) =>
-            currentItems.filter((i) => i._id !== item._id),
-          );
+          if (response.ok) {
+            // Remove from store
+            items.update((currentItems) =>
+              currentItems.filter((i) => i.id !== item.id),
+            );
           handleDeleteEvent(item);
         } else {
           error = "Failed to delete item";
@@ -181,7 +184,7 @@
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                itemId: item._id,
+                itemId: item.id,
                 quantity: qty,
               }),
             },
@@ -209,13 +212,6 @@
         error = "Invalid quantity";
       }
     }
-  }
-
-  function formatCurrency(amount: number): string {
-    if (isNaN(amount)) return "";
-    return (
-      amount.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " MMK"
-    );
   }
 
   async function addItem() {
@@ -295,7 +291,7 @@
     loading = true;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/items/${editItem._id}`,
+          `${import.meta.env.VITE_API_URL}/api/items/${editItem.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -311,7 +307,7 @@
       if (response.ok) {
         const updated = await response.json();
         items.update((current) =>
-          current.map((i) => (i._id === updated._id ? updated : i)),
+            current.map((i) => (i.id === updated.id ? updated : i)),
         );
         showEditModal = false;
         editItem = null;
@@ -451,14 +447,20 @@
           </div>
           <div class="form-group">
             <label for="price">Price*</label>
-            <input
-              id="price"
-              type="number"
-              min="0"
-              step="0.01"
-              bind:value={newItem.price}
-              required
-            />
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                {currencySymbol($settings.currency)}
+              </span>
+              <input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                bind:value={newItem.price}
+                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-10' : 'pl-8'}"
+                required
+              />
+            </div>
           </div>
           <div class="form-group">
             <label for="stockQuantity">Stock Quantity*</label>
@@ -535,14 +537,20 @@
           </div>
           <div class="form-group">
             <label for="edit-price">Price*</label>
-            <input
-              id="edit-price"
-              type="number"
-              min="0"
-              step="0.01"
-              bind:value={editForm.price}
-              required
-            />
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+                {currencySymbol($settings.currency)}
+              </span>
+              <input
+                id="edit-price"
+                type="number"
+                min="0"
+                step="0.01"
+                bind:value={editForm.price}
+                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-10' : 'pl-8'}"
+                required
+              />
+            </div>
           </div>
           <div class="form-group">
             <label for="edit-stockQuantity">Stock Quantity*</label>

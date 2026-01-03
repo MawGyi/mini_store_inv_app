@@ -2,7 +2,7 @@
 
 A modern, full-stack inventory management application built with SvelteKit, featuring real-time stock tracking, sales management, and multi-currency support.
 
-![Mini Store Inventory](https://via.placeholder.com/1200x630?text=Mini+Store+Inventory+Management)
+![Mini Store Inventory](screenshot.svg)
 
 ## Features
 

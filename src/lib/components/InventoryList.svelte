@@ -445,23 +445,23 @@
               required
             />
           </div>
-          <div class="form-group">
-            <label for="price">Price*</label>
-            <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-                {currencySymbol($settings.currency)}
-              </span>
-              <input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                bind:value={newItem.price}
-                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-10' : 'pl-8'}"
-                required
-              />
+            <div class="form-group">
+              <label for="price">Price*</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none select-none whitespace-nowrap {currencySymbol($settings.currency).length > 1 ? 'text-sm' : ''}">
+                  {currencySymbol($settings.currency)}
+                </span>
+                <input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  bind:value={newItem.price}
+                  class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
+                  required
+                />
+              </div>
             </div>
-          </div>
           <div class="form-group">
             <label for="stockQuantity">Stock Quantity*</label>
             <input
@@ -538,7 +538,7 @@
           <div class="form-group">
             <label for="edit-price">Price*</label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none select-none whitespace-nowrap {currencySymbol($settings.currency).length > 1 ? 'text-sm' : ''}">
                 {currencySymbol($settings.currency)}
               </span>
               <input
@@ -547,7 +547,7 @@
                 min="0"
                 step="0.01"
                 bind:value={editForm.price}
-                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-10' : 'pl-8'}"
+                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
                 required
               />
             </div>

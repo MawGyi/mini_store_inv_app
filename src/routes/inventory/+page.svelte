@@ -496,7 +496,7 @@
           <div class="form-group">
             <label for="price" class="form-label">Price</label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium pointer-events-none select-none whitespace-nowrap {currencySymbol($settings.currency).length > 1 ? 'text-sm' : ''}">
                 {currencySymbol($settings.currency)}
               </span>
               <input 
@@ -505,7 +505,7 @@
                 step="0.01" 
                 min="0"
                 bind:value={formData.price}
-                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-10' : 'pl-8'} {formErrors.price ? 'border-red-500' : ''}"
+                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'} {formErrors.price ? 'border-red-500' : ''}"
                 placeholder="0.00"
                 disabled={isSubmitting}
               />

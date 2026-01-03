@@ -13,7 +13,17 @@
   let enableNotifications = $settings.enableNotifications
   let enableEmailReports = $settings.enableEmailReports
   let isSaving = false
+
+  let salesStartDate = ''
+  let salesEndDate = ''
+  let clearConfirmText = ''
   
+  let importFile: File | null = null
+  let importPreview: any[] = []
+  let importErrors: string[] = []
+  let showImportModal = false
+  let isImporting = false
+
   onMount(() => {
     settings.load()
     storeName = $settings.storeName
@@ -25,6 +35,11 @@
     lowStockThreshold = $settings.lowStockThreshold
     enableNotifications = $settings.enableNotifications
     enableEmailReports = $settings.enableEmailReports
+    
+    const today = new Date()
+    const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+    salesStartDate = lastMonth.toISOString().split('T')[0]
+    salesEndDate = today.toISOString().split('T')[0]
   })
   
   async function saveSettings() {
@@ -73,6 +88,157 @@
   
   function testNotification() {
     addNotification('Test notification', 'success')
+  }
+
+  function exportItems() {
+    window.open('/api/export/items', '_blank')
+    addNotification('Items exported', 'success')
+  }
+
+  function exportSales() {
+    if (!salesStartDate || !salesEndDate) {
+      addNotification('Please select date range', 'error')
+      return
+    }
+    const params = new URLSearchParams({
+      startDate: salesStartDate,
+      endDate: salesEndDate
+    })
+    window.open(`/api/export/sales?${params}`, '_blank')
+    addNotification('Sales exported', 'success')
+  }
+
+  function exportBackup() {
+    window.open('/api/export/backup', '_blank')
+    addNotification('Backup downloaded', 'success')
+  }
+
+  function handleImportFile(event: Event) {
+    const target = event.target as HTMLInputElement
+    const file = target.files?.[0]
+    if (file) {
+      importFile = file
+      parseCSV(file)
+    }
+  }
+
+  function parseCSV(file: File) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const text = e.target?.result as string
+      const lines = text.split('\n').filter(l => l.trim())
+      if (lines.length < 2) {
+        addNotification('CSV file is empty or invalid', 'error')
+        return
+      }
+      
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''))
+      importPreview = []
+      importErrors = []
+      
+      for (let i = 1; i < Math.min(lines.length, 11); i++) {
+        const values = parseCSVLine(lines[i])
+        const row: any = {}
+        headers.forEach((h, idx) => {
+          row[h] = values[idx]?.trim().replace(/^['"]|['"]$/g, '') || ''
+        })
+        row._rowNum = i
+        importPreview.push(row)
+      }
+      
+      validatePreview()
+      showImportModal = true
+    }
+    reader.readAsText(file)
+  }
+
+  function parseCSVLine(line: string): string[] {
+    const result: string[] = []
+    let current = ''
+    let inQuotes = false
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      if (char === '"') {
+        inQuotes = !inQuotes
+      } else if (char === ',' && !inQuotes) {
+        result.push(current)
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    result.push(current)
+    return result
+  }
+
+  function validatePreview() {
+    importErrors = []
+    
+    for (let i = 0; i < importPreview.length; i++) {
+      const row = importPreview[i]
+      const errors: string[] = []
+      
+      if (!row.name) errors.push('Name required')
+      if (!row.itemcode) errors.push('Item code required')
+      if (!row.price || isNaN(parseFloat(row.price)) || parseFloat(row.price) <= 0) errors.push('Invalid price')
+      if (!row.stockquantity || isNaN(parseInt(row.stockquantity))) errors.push('Invalid stock quantity')
+      
+      if (errors.length > 0) {
+        importErrors.push(`Row ${row._rowNum}: ${errors.join(', ')}`)
+      }
+    }
+  }
+
+  async function confirmImport() {
+    if (!importFile) return
+    
+    isImporting = true
+    try {
+      const formData = new FormData()
+      formData.append('file', importFile)
+      
+      const res = await fetch('/api/import/items', {
+        method: 'POST',
+        body: formData
+      })
+      
+      const data = await res.json()
+      
+      if (data.error) {
+        addNotification(data.error, 'error')
+      } else {
+        addNotification(`Imported ${data.imported} items successfully${data.skipped > 0 ? ` (${data.skipped} skipped)` : ''}`, 'success')
+        showImportModal = false
+        importFile = null
+        importPreview = []
+      }
+    } catch (error) {
+      addNotification('Failed to import items', 'error')
+    }
+    isImporting = false
+  }
+
+  async function clearAllData() {
+    if (clearConfirmText !== 'DELETE') {
+      addNotification('Type DELETE to confirm', 'error')
+      return
+    }
+    
+    try {
+      const res = await fetch('/api/import/clear-all', { method: 'POST' })
+      const data = await res.json()
+      
+      if (data.error) {
+        addNotification(data.error, 'error')
+      } else {
+        addNotification('All data cleared successfully', 'success')
+        showImportModal = false
+        clearConfirmText = ''
+      }
+    } catch (error) {
+      addNotification('Failed to clear data', 'error')
+    }
   }
   
   $: previewAmount = formatCurrency(1234.56, currency)
@@ -222,6 +388,80 @@
       </button>
     </div>
   </div>
+
+  <!-- Data Management -->
+  <div class="card">
+    <h2 class="card-header flex items-center gap-2">
+      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      </svg>
+      Data Management
+    </h2>
+    
+    <div class="space-y-6">
+      <div>
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Export Data</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button on:click={exportItems} class="btn btn-secondary justify-start">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export Items (CSV)
+          </button>
+          
+          <div class="flex gap-2">
+            <input type="date" bind:value={salesStartDate} class="input text-sm" />
+            <span class="self-center text-gray-400">to</span>
+            <input type="date" bind:value={salesEndDate} class="input text-sm" />
+            <button on:click={exportSales} class="btn btn-secondary">
+              Export Sales
+            </button>
+          </div>
+          
+          <button on:click={exportBackup} class="btn btn-secondary justify-start">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Full Backup (JSON)
+          </button>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-100 pt-6">
+        <h3 class="text-sm font-medium text-gray-900 mb-3">Import Items</h3>
+        <p class="text-sm text-gray-500 mb-3">Upload a CSV file with columns: name, itemcode, price, stockquantity, category, lowstockthreshold</p>
+        
+        <div class="flex flex-wrap gap-3">
+          <label class="btn btn-secondary cursor-pointer">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            Choose CSV File
+            <input type="file" accept=".csv" on:change={handleImportFile} class="hidden" />
+          </label>
+          
+          <a href="/api/export/items" download="items_template.csv" class="btn btn-secondary">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download Template
+          </a>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-100 pt-6">
+        <h3 class="text-sm font-medium text-red-600 mb-3">Danger Zone</h3>
+        <p class="text-sm text-gray-500 mb-3">Permanently delete all data including items, sales, and categories.</p>
+        
+        <button on:click={() => showImportModal = true} class="btn btn-danger">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Clear All Data
+        </button>
+      </div>
+    </div>
+  </div>
   
   <!-- Save Button -->
   <div class="flex justify-end">
@@ -241,3 +481,115 @@
     </button>
   </div>
 </div>
+
+<!-- Import Preview Modal -->
+{#if showImportModal}
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div class="flex items-center justify-between p-4 border-b">
+        <h3 class="text-lg font-semibold">Import Items Preview</h3>
+        <button on:click={() => { showImportModal = false; importFile = null; importPreview = []; }} class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div class="p-4 overflow-y-auto max-h-[60vh]">
+        {#if importErrors.length > 0}
+          <div class="mb-4 p-3 bg-red-50 rounded-lg">
+            <p class="text-sm font-medium text-red-700 mb-2">Validation Errors:</p>
+            <ul class="text-sm text-red-600 space-y-1">
+              {#each importErrors as error}
+                <li>{error}</li>
+              {/each}
+            </ul>
+          </div>
+        {/if}
+        
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Row</th>
+              <th class="px-3 py-2 text-left">Name</th>
+              <th class="px-3 py-2 text-left">Item Code</th>
+              <th class="px-3 py-2 text-right">Price</th>
+              <th class="px-3 py-2 text-right">Stock</th>
+              <th class="px-3 py-2 text-left">Category</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            {#each importPreview as row}
+              {@const hasError = !row.name || !row.itemcode || !row.price || !row.stockquantity}
+              <tr class="{hasError ? 'bg-red-50' : ''}">
+                <td class="px-3 py-2 text-gray-500">{row._rowNum}</td>
+                <td class="px-3 py-2 {hasError && !row.name ? 'text-red-600 font-medium' : ''}">{row.name || '—'}</td>
+                <td class="px-3 py-2 {hasError && !row.itemcode ? 'text-red-600 font-medium' : ''}">{row.itemcode || '—'}</td>
+                <td class="px-3 py-2 text-right {hasError && (!row.price || isNaN(parseFloat(row.price))) ? 'text-red-600 font-medium' : ''}">{row.price || '—'}</td>
+                <td class="px-3 py-2 text-right {hasError && (!row.stockquantity || isNaN(parseInt(row.stockquantity))) ? 'text-red-600 font-medium' : ''}">{row.stockquantity || '—'}</td>
+                <td class="px-3 py-2">{row.category || '—'}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+        
+        {#if importPreview.length === 0}
+          <p class="text-center text-gray-500 py-8">No data to preview</p>
+        {/if}
+      </div>
+      
+      <div class="flex justify-end gap-3 p-4 border-t bg-gray-50">
+        <button on:click={() => { showImportModal = false; importFile = null; importPreview = []; }} class="btn btn-secondary">
+          Cancel
+        </button>
+        <button on:click={confirmImport} class="btn btn-primary" disabled={isImporting}>
+          {isImporting ? 'Importing...' : 'Skip Errors & Import'}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Clear Data Modal -->
+{#if showImportModal}
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-md w-full">
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Clear All Data</h3>
+            <p class="text-sm text-gray-500">This action cannot be undone.</p>
+          </div>
+        </div>
+        
+        <p class="text-sm text-gray-600 mb-4">
+          This will permanently delete all items, sales, categories, and settings. Your account will remain but all data will be lost.
+        </p>
+        
+        <label class="block mb-2 text-sm font-medium text-gray-700">
+          Type <code class="px-1 bg-gray-100 rounded">DELETE</code> to confirm
+        </label>
+        <input 
+          type="text" 
+          bind:value={clearConfirmText}
+          class="input mb-4" 
+          placeholder="DELETE"
+        />
+        
+        <div class="flex justify-end gap-3">
+          <button on:click={() => { showImportModal = false; clearConfirmText = ''; }} class="btn btn-secondary">
+            Cancel
+          </button>
+          <button on:click={clearAllData} class="btn btn-danger" disabled={clearConfirmText !== 'DELETE'}>
+            Clear All Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}

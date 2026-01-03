@@ -30,6 +30,17 @@
   async function saveSettings() {
     isSaving = true
     
+    const changes: string[] = []
+    if (storeName !== $settings.storeName) changes.push('store name')
+    if (storeAddress !== $settings.storeAddress) changes.push('address')
+    if (storePhone !== $settings.storePhone) changes.push('phone')
+    if (storeEmail !== $settings.storeEmail) changes.push('email')
+    if (currency !== $settings.currency) changes.push('currency')
+    if (timezone !== $settings.timezone) changes.push('timezone')
+    if (lowStockThreshold !== $settings.lowStockThreshold) changes.push('threshold')
+    if (enableNotifications !== $settings.enableNotifications) changes.push('notifications')
+    if (enableEmailReports !== $settings.enableEmailReports) changes.push('email reports')
+    
     settings.set({
       storeName,
       storeAddress,
@@ -43,12 +54,25 @@
     })
     
     await new Promise(resolve => setTimeout(resolve, 300))
-    addNotification('Settings saved successfully!', 'success')
+    
+    if (changes.length === 0) {
+      addNotification('No changes detected', 'info')
+    } else if (changes.length === 1) {
+      addNotification(`${capitalize(changes[0])} updated`, 'success')
+    } else if (changes.length <= 3) {
+      addNotification(`${changes.map(capitalize).join(', ')} updated`, 'success')
+    } else {
+      addNotification('Settings updated', 'success')
+    }
     isSaving = false
+  }
+
+  function capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1)
   }
   
   function testNotification() {
-    addNotification('This is a test notification!', 'success')
+    addNotification('Test notification', 'success')
   }
   
   $: previewAmount = formatCurrency(1234.56, currency)

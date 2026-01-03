@@ -3,6 +3,7 @@
   import { page } from '$app/stores'
   import { notifications, removeNotification } from '$lib/stores/stores'
   import { auth, currentUser, isAuthenticated, isLoading } from '$lib/stores/auth'
+  import { settings } from '$lib/stores/settings'
   import { onMount } from 'svelte'
   import { goto } from '$app/navigation'
   import { browser } from '$app/environment'
@@ -102,7 +103,7 @@
           </svg>
         </div>
         {#if !isSidebarCollapsed}
-          <span class="text-lg font-bold text-gray-900">Mini Store</span>
+          <span class="text-lg font-bold text-gray-900">{$settings.storeName}</span>
         {/if}
       </div>
       
@@ -285,7 +286,7 @@
         <div class="fixed inset-0 bg-black/50" on:click={() => isMobileMenuOpen = false}></div>
         <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-xl">
           <div class="flex items-center justify-between h-16 px-4 border-b border-gray-100">
-            <span class="text-lg font-bold text-gray-900">Mini Store</span>
+            <span class="text-lg font-bold text-gray-900">{$settings.storeName}</span>
             <button on:click={() => isMobileMenuOpen = false} class="btn-icon">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

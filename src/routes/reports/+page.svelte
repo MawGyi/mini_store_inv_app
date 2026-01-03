@@ -257,7 +257,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div class="p-4 bg-primary-50 rounded-xl">
             <p class="text-sm text-primary-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(salesData.summary.totalAmount)}</p>
+            <p class="text-2xl font-bold text-primary-700">{formatCurrency(salesData.summary.totalAmount, $settings.currency)}</p>
           </div>
           <div class="p-4 bg-green-50 rounded-xl">
             <p class="text-sm text-green-600 font-medium">Transactions</p>
@@ -269,7 +269,7 @@
           </div>
           <div class="p-4 bg-purple-50 rounded-xl">
             <p class="text-sm text-purple-600 font-medium">Avg. Sale</p>
-            <p class="text-2xl font-bold text-purple-700">{formatCurrency(salesData.summary.avgSaleValue)}</p>
+            <p class="text-2xl font-bold text-purple-700">{formatCurrency(salesData.summary.avgSaleValue, $settings.currency)}</p>
           </div>
         </div>
 
@@ -308,7 +308,7 @@
                   <td class="px-4 py-3 text-sm text-gray-900">{sale.invoiceNumber}</td>
                   <td class="px-4 py-3 text-sm text-gray-900">{sale.customerName || '-'}</td>
                   <td class="px-4 py-3 text-sm text-gray-900 capitalize">{sale.paymentMethod.replace('_', ' ')}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(sale.totalAmount)}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(sale.totalAmount, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>
@@ -375,7 +375,7 @@
           </div>
           <div class="p-4 bg-primary-50 rounded-xl">
             <p class="text-sm text-primary-600 font-medium">Total Value</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(inventoryData.summary.totalValue)}</p>
+            <p class="text-2xl font-bold text-primary-700">{formatCurrency(inventoryData.summary.totalValue, $settings.currency)}</p>
           </div>
           <div class="p-4 bg-red-50 rounded-xl">
             <p class="text-sm text-red-600 font-medium">Low Stock</p>
@@ -420,7 +420,7 @@
                   <td class="px-4 py-3 text-sm text-gray-900">{item.name}</td>
                   <td class="px-4 py-3 text-sm text-gray-500">{item.itemCode}</td>
                   <td class="px-4 py-3 text-sm text-gray-500">{item.category || '-'}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price)}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price, $settings.currency)}</td>
                   <td class="px-4 py-3 text-sm text-gray-900 text-right">{item.stockQuantity}</td>
                   <td class="px-4 py-3">
                     <span class="px-2 py-1 text-xs font-medium rounded-full {isOut ? 'bg-red-100 text-red-700' : isLow ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">
@@ -485,7 +485,7 @@
           </div>
           <div class="p-4 bg-green-50 rounded-xl">
             <p class="text-sm text-green-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-green-700">{formatCurrency(topProductsData.summary.totalRevenue)}</p>
+            <p class="text-2xl font-bold text-green-700">{formatCurrency(topProductsData.summary.totalRevenue, $settings.currency)}</p>
           </div>
           <div class="p-4 bg-blue-50 rounded-xl">
             <p class="text-sm text-blue-600 font-medium">Products</p>
@@ -526,7 +526,7 @@
                   <td class="px-4 py-3 text-sm text-gray-900 font-medium">{product.name}</td>
                   <td class="px-4 py-3 text-sm text-gray-500">{product.itemCode}</td>
                   <td class="px-4 py-3 text-sm text-gray-900 text-right">{product.quantity}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(product.revenue)}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(product.revenue, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>
@@ -574,7 +574,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div class="p-4 bg-primary-50 rounded-xl">
             <p class="text-sm text-primary-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(dailySummaryData.summary.totalRevenue)}</p>
+            <p class="text-2xl font-bold text-primary-700">{formatCurrency(dailySummaryData.summary.totalRevenue, $settings.currency)}</p>
           </div>
           <div class="p-4 bg-green-50 rounded-xl">
             <p class="text-sm text-green-600 font-medium">Transactions</p>
@@ -582,11 +582,11 @@
           </div>
           <div class="p-4 bg-blue-50 rounded-xl">
             <p class="text-sm text-blue-600 font-medium">Avg. Daily</p>
-            <p class="text-2xl font-bold text-blue-700">{formatCurrency(dailySummaryData.summary.avgDailySales)}</p>
+            <p class="text-2xl font-bold text-blue-700">{formatCurrency(dailySummaryData.summary.avgDailySales, $settings.currency)}</p>
           </div>
           <div class="p-4 bg-purple-50 rounded-xl">
             <p class="text-sm text-purple-600 font-medium">Avg. Transaction</p>
-            <p class="text-2xl font-bold text-purple-700">{formatCurrency(dailySummaryData.summary.avgTransactionValue)}</p>
+            <p class="text-2xl font-bold text-purple-700">{formatCurrency(dailySummaryData.summary.avgTransactionValue, $settings.currency)}</p>
           </div>
         </div>
 
@@ -619,9 +619,9 @@
               {#each dailySummaryData.daily as day}
                 <tr class="hover:bg-gray-50">
                   <td class="px-4 py-3 text-sm text-gray-900">{day.date}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(day.totalSales)}</td>
+                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(day.totalSales, $settings.currency)}</td>
                   <td class="px-4 py-3 text-sm text-gray-500 text-right">{day.transactionCount}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500 text-right">{formatCurrency(day.avgSaleValue)}</td>
+                  <td class="px-4 py-3 text-sm text-gray-500 text-right">{formatCurrency(day.avgSaleValue, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>

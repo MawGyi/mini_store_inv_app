@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { items } from "$lib/stores";
+  import { items as itemsStore } from "$lib/stores";
   import type { Item } from "$lib/types";
   import { onMount } from "svelte";
   import AdvancedSearch from "./AdvancedSearch.svelte";
   import SkeletonLoader from "./SkeletonLoader.svelte";
   import { settings, formatCurrency, currencySymbol } from '$lib/stores/settings';
-
-  // Remove local formatCurrency - using imported one from settings
 
   let searchQuery = "";
   let filteredItems: Item[] = [];
@@ -35,6 +33,50 @@
     lowStockThreshold: 5,
   };
   let editFormError: string | null = null;
+
+  let currentPage = 1;
+  let totalPages = 1;
+  let totalItems = 0;
+  let itemsPerPage = 10;
+  let apiItems: Item[] = [];
+
+  onMount(async () => {
+    await loadItems(currentPage);
+  });
+
+  async function loadItems(page: number) {
+    loading = true;
+    error = null;
+    try {
+      const res = await fetch(`/api/items?page=${page}&limit=${itemsPerPage}`);
+      const data = await res.json();
+      if (data.success) {
+        apiItems = data.data;
+        itemsPerPage = data.pagination.limit;
+        totalItems = data.pagination.total;
+        totalPages = data.pagination.totalPages;
+        currentPage = data.pagination.page;
+        itemsStore.set(apiItems);
+      } else {
+        error = 'Failed to load items';
+      }
+    } catch (err) {
+      error = 'Error loading items';
+      console.error(err);
+    } finally {
+      loading = false;
+    }
+  }
+
+  function changePage(page: number) {
+    if (page >= 1 && page <= totalPages) {
+      loadItems(page);
+    }
+  }
+
+  function exportToCsv() {
+    window.open('/api/export/items', '_blank');
+  }
 
   // Event handlers for parent component
   function handleEdit(item: Item) {
@@ -70,7 +112,7 @@
   }
 
   function filterAndSortItems() {
-    let filtered = [...$items];
+    let filtered = [...$itemsStore];
 
     // Apply search filter
     if (searchQuery) {
@@ -125,7 +167,7 @@
   }
 
   $: {
-    if ($items.length > 0) {
+    if (apiItems.length > 0) {
       filterAndSortItems();
     }
   }
@@ -152,7 +194,7 @@
 
           if (response.ok) {
             // Remove from store
-            items.update((currentItems) =>
+            itemsStore.update((currentItems) =>
               currentItems.filter((i) => i.id !== item.id),
             );
           handleDeleteEvent(item);
@@ -197,7 +239,7 @@
             );
             if (itemsResponse.ok) {
               const updatedItems = await itemsResponse.json();
-              items.set(updatedItems);
+              itemsStore.set(updatedItems);
             }
             handleSaleEvent(item);
           } else {
@@ -243,7 +285,7 @@
       );
       if (response.ok) {
         const created = await response.json();
-        items.update((current) => [created, ...current]);
+        itemsStore.update((current) => [created, ...current]);
         showAddModal = false;
         newItem = {
           name: "",
@@ -306,7 +348,7 @@
       );
       if (response.ok) {
         const updated = await response.json();
-        items.update((current) =>
+        itemsStore.update((current) =>
             current.map((i) => (i.id === updated.id ? updated : i)),
         );
         showEditModal = false;
@@ -328,13 +370,25 @@
   <div class="inventory-header">
     <div class="header-content">
       <h2>Inventory</h2>
-      {#if $items.length > 0}
-        <button
-          class="btn btn-primary icon-hover-effect"
-          on:click={() => (showAddModal = true)}
-          aria-label="Add new item">Add Item</button
-        >
-      {/if}
+      <div class="header-actions">
+        {#if $itemsStore.length > 0}
+          <button
+            class="btn btn-secondary"
+            on:click={exportToCsv}
+            aria-label="Export to CSV"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
+          </button>
+          <button
+            class="btn btn-primary icon-hover-effect"
+            on:click={() => (showAddModal = true)}
+            aria-label="Add new item">Add Item</button
+          >
+        {/if}
+      </div>
     </div>
   </div>
 
@@ -351,20 +405,47 @@
   <!-- Search Stats -->
   <div class="search-stats">
     <span class="stat-badge">
-      {filteredItems.length} of {$items.length} items
+      {filteredItems.length} of {$itemsStore.length} items
     </span>
   </div>
 
   <!-- Loading State -->
-  {#if $items.length === 0}
+  {#if loading && $itemsStore.length === 0}
     <div class="loading-state">
       <div class="loading-header">
         <SkeletonLoader type="text" width="200px" height="24px" />
         <SkeletonLoader type="text" width="150px" height="16px" />
       </div>
       <div class="loading-table">
+        <div class="skeleton-table-header">
+          <SkeletonLoader type="text" width="15%" height="16px" customClass="hidden md:table-cell" />
+          <SkeletonLoader type="text" width="25%" height="16px" />
+          <SkeletonLoader type="text" width="15%" height="16px" customClass="hidden lg:table-cell" />
+          <SkeletonLoader type="text" width="20%" height="16px" />
+          <SkeletonLoader type="text" width="15%" height="16px" customClass="hidden lg:table-cell" />
+          <SkeletonLoader type="text" width="10%" height="16px" />
+        </div>
         {#each Array(5) as _, i}
-          <SkeletonLoader type="table-row" />
+          <div class="skeleton-table-row">
+            <div class="skeleton-cell hidden md:table-cell" style="width: 15%" data-label="Item Code">
+              <SkeletonLoader type="text" width="100%" height="16px" />
+            </div>
+            <div class="skeleton-cell" style="width: 25%" data-label="Name">
+              <SkeletonLoader type="text" width="100%" height="16px" />
+            </div>
+            <div class="skeleton-cell hidden lg:table-cell" style="width: 15%" data-label="Price">
+              <SkeletonLoader type="text" width="100%" height="16px" />
+            </div>
+            <div class="skeleton-cell" style="width: 20%" data-label="Stock">
+              <SkeletonLoader type="text" width="100%" height="16px" />
+            </div>
+            <div class="skeleton-cell hidden lg:table-cell" style="width: 15%" data-label="Status">
+              <SkeletonLoader type="text" width="100%" height="16px" />
+            </div>
+            <div class="skeleton-cell" style="width: 10%" data-label="Actions">
+              <SkeletonLoader type="text" width="60px" height="16px" />
+            </div>
+          </div>
         {/each}
       </div>
     </div>
@@ -457,7 +538,7 @@
                   min="0"
                   step="0.01"
                   bind:value={newItem.price}
-                  class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
+                   class="input {currencySymbol($settings.currency).length === 3 ? 'pl-16' : currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
                   required
                 />
               </div>
@@ -547,7 +628,7 @@
                 min="0"
                 step="0.01"
                 bind:value={editForm.price}
-                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
+                 class="input {currencySymbol($settings.currency).length === 3 ? 'pl-16' : currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'}"
                 required
               />
             </div>
@@ -589,7 +670,7 @@
         </form>
       </div>
     {/if}
-    {#if $items.length === 0}
+    {#if $itemsStore.length === 0}
       <div class="empty-state">
         <div class="empty-icon">
           <svg
@@ -689,11 +770,11 @@
       <table class="table">
         <thead>
           <tr>
-            <th>Item Code</th>
+            <th class="hidden md:table-cell">Item Code</th>
             <th>Name</th>
-            <th>Price</th>
+            <th class="hidden lg:table-cell">Price</th>
             <th>Stock Level</th>
-            <th>Status</th>
+            <th class="hidden lg:table-cell">Status</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -704,29 +785,38 @@
               class:out-of-stock={isOutOfStock(item)}
               class="row-hover"
             >
-              <td>
+              <td class="hidden md:table-cell" data-label="Item Code">
                 <div class="item-code">
                   <span class="code-badge">{item.itemCode}</span>
                 </div>
               </td>
-              <td>
+              <td data-label="Name">
                 <div class="item-name">
                   <h4 class="item-title">{item.name}</h4>
-                  <p class="item-description">Product description</p>
+                  <p class="item-description md:hidden">Code: {item.itemCode}</p>
                 </div>
               </td>
-              <td>
+              <td class="hidden lg:table-cell" data-label="Price">
                 <div class="item-price">
                   <span class="price-amount">{formatCurrency(item.price)}</span>
                 </div>
               </td>
-              <td>
+              <td data-label="Stock">
                 <div class="stock-level">
                   <div class="stock-quantity">
                     <span class="quantity-number">{item.stockQuantity}</span>
                     <span class="quantity-unit">units</span>
                   </div>
-                  <div class="stock-indicator">
+                  <div class="stock-indicator md:hidden">
+                    {#if isLowStock(item) && !isOutOfStock(item)}
+                      <span class="stock-badge warning">Low</span>
+                    {:else if isOutOfStock(item)}
+                      <span class="stock-badge danger">Out</span>
+                    {:else}
+                      <span class="stock-badge success">In</span>
+                    {/if}
+                  </div>
+                  <div class="stock-indicator hidden md:block">
                     {#if isLowStock(item) && !isOutOfStock(item)}
                       <span class="stock-badge warning">Low Stock</span>
                     {:else if isOutOfStock(item)}
@@ -737,7 +827,7 @@
                   </div>
                 </div>
               </td>
-              <td>
+              <td class="hidden lg:table-cell" data-label="Status">
                 <div class="status-indicator">
                   {#if isOutOfStock(item)}
                     <span class="status-badge danger">Unavailable</span>
@@ -748,7 +838,7 @@
                   {/if}
                 </div>
               </td>
-              <td>
+              <td data-label="Actions">
                 <div class="action-buttons">
                   <button
                     class="btn btn-secondary btn-sm action-btn icon-hover-effect"
@@ -825,6 +915,36 @@
           {/each}
         </tbody>
       </table>
+      
+      {#if totalPages > 1}
+        <div class="pagination-bar">
+          <button
+            class="btn btn-sm btn-secondary"
+            on:click={() => changePage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </button>
+          <div class="pagination-pages">
+            {#each Array(totalPages) as _, i}
+              {@const pageNum = i + 1}
+              <button
+                class="pagination-page-btn {pageNum === currentPage ? 'active' : ''}"
+                on:click={() => changePage(pageNum)}
+              >
+                {pageNum}
+              </button>
+            {/each}
+          </div>
+          <button
+            class="btn btn-sm btn-secondary"
+            on:click={() => changePage(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 </div>
@@ -872,6 +992,15 @@
   .header-actions {
     display: flex;
     gap: var(--spacing-4);
+  }
+
+  .header-actions .btn {
+    transition: all var(--transition-normal);
+  }
+
+  .header-actions .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 
   .search-stats {
@@ -1284,6 +1413,58 @@
     gap: var(--spacing-2);
   }
 
+  .skeleton-table-header {
+    display: flex;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .skeleton-table-row {
+    display: flex;
+    gap: var(--spacing-4);
+    padding: var(--spacing-4);
+    align-items: center;
+  }
+
+  .skeleton-cell {
+    height: 1rem;
+  }
+
+  .skeleton-actions {
+    display: flex;
+    gap: var(--spacing-2);
+  }
+
+  @media (max-width: 640px) {
+    .skeleton-table-header {
+      display: none;
+    }
+
+    .skeleton-table-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-3);
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .skeleton-cell {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100% !important;
+    }
+
+    .skeleton-cell::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: var(--gray-500);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+    }
+  }
+
   /* Responsive Design */
   @media (max-width: 1024px) {
     .header-content {
@@ -1327,6 +1508,42 @@
     .table {
       display: block;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table thead {
+      display: none;
+    }
+
+    .table tbody,
+    .table tr {
+      display: block;
+    }
+
+    .table tr {
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .table td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-2) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .table td:last-child {
+      border-bottom: none;
+      padding-top: var(--spacing-4);
+    }
+
+    .table td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: var(--gray-500);
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
     }
 
     .header-content h2 {
@@ -1414,5 +1631,53 @@
     justify-content: flex-end;
     gap: 1rem;
     margin-top: 0.5rem;
+  }
+  
+  /* Pagination Bar */
+  .pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-50);
+    margin-top: -1px;
+  }
+  
+  .pagination-pages {
+    display: flex;
+    gap: 0.25rem;
+  }
+  
+  .pagination-page-btn {
+    min-width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    background: white;
+    color: var(--gray-700);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+  
+  .pagination-page-btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+  }
+  
+  .pagination-page-btn.active {
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+    color: white;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
   }
 </style>

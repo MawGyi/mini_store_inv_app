@@ -1,10 +1,12 @@
 import { db } from '$lib/server/db'
 import { items, sales, saleItems } from '$lib/server/db/schema'
-import { eq, desc, sql, gte, sum, count } from 'drizzle-orm'
+import { eq, desc, sql, count } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 import type { SaleWithItems } from '$lib/types'
+import { SaleSchema, formatZodError } from '$lib/validators'
+import type { SaleInput } from '$lib/validators'
 
-function generateInvoiceNumber() {
+function generateInvoiceNumber(): string {
   const timestamp = Date.now().toString(36).toUpperCase()
   const random = Math.random().toString(36).substring(2, 6).toUpperCase()
   return `INV-${timestamp}-${random}`
@@ -46,77 +48,195 @@ export async function GET({ url }: { url: URL }) {
 
 export async function POST({ request }: { request: Request }) {
   try {
-    const body = await request.json()
+    const body: unknown = await request.json()
     
-    if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
-      return json({ success: false, error: 'At least one item is required' }, { status: 400 })
+    const parseResult = SaleSchema.safeParse(body)
+    
+    if (!parseResult.success) {
+      const errors = formatZodError(parseResult.error)
+      return json({
+        success: false,
+        error: 'Validation failed',
+        validationErrors: errors
+      }, { status: 400 })
     }
-    
-    if (!body.paymentMethod || !['cash', 'credit', 'mobile_payment'].includes(body.paymentMethod)) {
-      return json({ success: false, error: 'Invalid payment method' }, { status: 400 })
-    }
-    
-    let totalAmount = 0
-    const saleItemsData = []
-    
-    for (const item of body.items) {
-      totalAmount += item.totalPrice
-      
-      const itemExists = await db.select().from(items).where(eq(items.id, item.itemId)).get()
-      if (!itemExists) {
-        return json({ success: false, error: `Item with ID ${item.itemId} not found` }, { status: 400 })
-      }
-      
-      if (itemExists.stockQuantity < item.quantity) {
-        return json({ 
-          success: false, 
-          error: `Insufficient stock for ${itemExists.name}. Available: ${itemExists.stockQuantity}` 
-        }, { status: 400 })
-      }
-      
-      saleItemsData.push(item)
-    }
-    
+
+    const req = parseResult.data as SaleInput
     const invoiceNumber = generateInvoiceNumber()
-    
-    const saleResult = await db.insert(sales).values({
-      saleDate: body.saleDate ? new Date(body.saleDate) : new Date(),
-      totalAmount,
-      paymentMethod: body.paymentMethod,
-      customerName: body.customerName || null,
-      invoiceNumber,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }).returning()
-    
-    const saleId = saleResult[0].id
-    
-    for (const item of saleItemsData) {
-      await db.insert(saleItems).values({
-        saleId,
-        itemId: item.itemId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice
-      })
-      
-      await db.update(items)
-        .set({
-          stockQuantity: sql`${items.stockQuantity} - ${item.quantity}`,
-          updatedAt: new Date()
-        })
-        .where(eq(items.id, item.itemId))
+
+    interface SaleItemData {
+      itemId: number
+      quantity: number
+      unitPrice: number
+      totalPrice: number
+      name: string
+      currentStock: number
     }
-    
-    const createdSale = await db.select().from(sales).where(eq(sales.id, saleId)).get()
-    const createdSaleItems = await db.select().from(saleItems).where(eq(saleItems.saleId, saleId))
-    
+
+    interface SaleResult {
+      sale: {
+        id: number
+        saleDate: Date
+        totalAmount: number
+        paymentMethod: string
+        customerName: string | null
+        invoiceNumber: string
+        createdAt: Date
+        updatedAt: Date
+      } | undefined
+      items: Array<{
+        id: number
+        saleId: number
+        itemId: number
+        itemName: string
+        quantity: number
+        unitPrice: number
+        totalPrice: number
+      }>
+    }
+
+    const result = await db.transaction(async (tx): Promise<SaleResult> => {
+      const saleItemsData: SaleItemData[] = []
+      let totalAmount = 0
+
+      for (const item of req.items) {
+        const itemExists = await tx
+          .select({
+            id: items.id,
+            name: items.name,
+            stockQuantity: items.stockQuantity
+          })
+          .from(items)
+          .where(eq(items.id, item.itemId))
+          .get()
+
+        if (!itemExists) {
+          throw new Error(`Item with ID ${item.itemId} not found`)
+        }
+
+        if (itemExists.stockQuantity < item.quantity) {
+          throw new Error(
+            `Insufficient stock for ${itemExists.name}. Available: ${itemExists.stockQuantity}, Requested: ${item.quantity}`
+          )
+        }
+
+        const newStockQuantity = itemExists.stockQuantity - item.quantity
+        if (newStockQuantity < 0) {
+          throw new Error(
+            `Transaction would result in negative stock for ${itemExists.name}. Current: ${itemExists.stockQuantity}, Would subtract: ${item.quantity}`
+          )
+        }
+
+        saleItemsData.push({
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+          name: itemExists.name,
+          currentStock: itemExists.stockQuantity
+        })
+
+        totalAmount += item.totalPrice
+      }
+
+      const saleDate = req.saleDate ? new Date(req.saleDate) : new Date()
+      const now = new Date()
+
+      const saleResult = await tx.insert(sales).values({
+        saleDate,
+        totalAmount,
+        paymentMethod: req.paymentMethod,
+        customerName: req.customerName || null,
+        invoiceNumber,
+        createdAt: now,
+        updatedAt: now
+      }).returning()
+
+      const saleId = saleResult[0].id
+
+      for (const item of saleItemsData) {
+        await tx.insert(saleItems).values({
+          saleId,
+          itemId: item.itemId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice
+        })
+
+        await tx
+          .update(items)
+          .set({
+            stockQuantity: sql`${items.stockQuantity} - ${item.quantity}`,
+            updatedAt: now
+          })
+          .where(eq(items.id, item.itemId))
+      }
+
+      const createdSale = await tx
+        .select({
+          id: sales.id,
+          saleDate: sales.saleDate,
+          totalAmount: sales.totalAmount,
+          paymentMethod: sales.paymentMethod,
+          customerName: sales.customerName,
+          invoiceNumber: sales.invoiceNumber,
+          createdAt: sales.createdAt,
+          updatedAt: sales.updatedAt
+        })
+        .from(sales)
+        .where(eq(sales.id, saleId))
+        .get()
+
+      const createdSaleItems = await tx
+        .select({
+          id: saleItems.id,
+          saleId: saleItems.saleId,
+          itemId: saleItems.itemId,
+          itemName: items.name,
+          quantity: saleItems.quantity,
+          unitPrice: saleItems.unitPrice,
+          totalPrice: saleItems.totalPrice
+        })
+        .from(saleItems)
+        .innerJoin(items, eq(saleItems.itemId, items.id))
+        .where(eq(saleItems.saleId, saleId))
+        .then((rows: Array<{
+          id: number
+          saleId: number | null
+          itemId: number | null
+          itemName: string
+          quantity: number
+          unitPrice: number
+          totalPrice: number
+        }>) =>
+          rows.map((row) => ({
+            id: row.id,
+            saleId: row.saleId ?? saleId,
+            itemId: row.itemId ?? 0,
+            itemName: row.itemName,
+            quantity: row.quantity,
+            unitPrice: row.unitPrice,
+            totalPrice: row.totalPrice
+          }))
+        )
+
+      return {
+        sale: createdSale,
+        items: createdSaleItems
+      }
+    })
+
     return json({
       success: true,
-      data: { ...createdSale!, items: createdSaleItems }
+      data: {
+        ...result.sale!,
+        items: result.items
+      }
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating sale:', error)
-    return json({ success: false, error: 'Failed to create sale' }, { status: 500 })
+    
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create sale'
+    return json({ success: false, error: errorMessage }, { status: 400 })
   }
 }

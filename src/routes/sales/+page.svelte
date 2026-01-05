@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import { addNotification } from '$lib/stores/stores'
   import { settings, formatCurrency, currencySymbol } from '$lib/stores/settings'
+  import { generateSaleReceipt } from '$lib/utils/pdfGenerator'
   import type { Sale, SaleWithItems, Item } from '$lib/types'
   
   let sales: Sale[] = []
@@ -224,6 +225,26 @@
     }
     return labels[method] || method
   }
+
+  function exportSalesToCsv() {
+    window.open('/api/export/sales', '_blank')
+  }
+
+  function printReceipt(sale: SaleWithItems) {
+    const receiptItems = sale.items.map(item => ({
+      name: item.itemName || `Item #${item.itemId}`,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      totalPrice: item.totalPrice
+    }))
+    
+    generateSaleReceipt(sale, receiptItems, {
+      storeName: $settings.storeName,
+      storeAddress: $settings.storeAddress,
+      storePhone: $settings.storePhone
+    })
+    addNotification('Receipt downloaded', 'success')
+  }
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -232,19 +253,27 @@
   <title>Sales - Mini Store Inventory</title>
 </svelte:head>
 
-<div class="space-y-6">
+  <div class="space-y-6">
   <!-- Page Header -->
   <div class="page-header">
     <div>
       <h1 class="page-title">Sales</h1>
       <p class="page-subtitle">Track your sales and transactions.</p>
     </div>
-    <button on:click={openNewSaleModal} class="btn btn-primary">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      New Sale
-    </button>
+    <div class="flex gap-3">
+      <button on:click={exportSalesToCsv} class="btn btn-secondary">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        Export CSV
+      </button>
+      <button on:click={openNewSaleModal} class="btn btn-primary">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Sale
+      </button>
+    </div>
   </div>
   
   <!-- Sales Stats -->
@@ -666,9 +695,18 @@
           </div>
         </div>
         
-        <!-- Close Button -->
-        <div class="flex justify-end pt-4 border-t border-gray-100">
-          <button on:click={closeDetailModal} class="btn btn-secondary">Close</button>
+        <!-- Actions -->
+        <div class="flex gap-3 pt-4 border-t border-gray-100">
+          <button 
+            on:click={() => selectedSale && printReceipt(selectedSale)}
+            class="btn btn-secondary flex-1"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Print Receipt
+          </button>
+          <button on:click={closeDetailModal} class="btn btn-primary flex-1">Close</button>
         </div>
       </div>
     </div>

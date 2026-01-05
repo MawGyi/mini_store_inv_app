@@ -71,3 +71,22 @@ export interface Notification {
   message: string
   duration?: number
 }
+
+export interface DashboardAlert {
+  type: string
+  message: string
+  severity: 'critical' | 'high' | 'medium' | 'low'
+  itemId?: number
+  itemCode?: string
+  name?: string
+  stockQuantity?: number
+  expiryDate?: Date
+  daysUntilExpiry?: number
+}
+
+export interface ExpiryAlertSummary {
+  expired: DashboardAlert[]
+  expiringSoon: DashboardAlert[]
+  totalExpired: number
+  totalExpiringSoon: number
+}

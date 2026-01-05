@@ -214,7 +214,7 @@
 
   .search-input {
     width: 100%;
-    padding: var(--spacing-4) var(--spacing-4) var(--spacing-4) var(--spacing-12);
+    padding: var(--spacing-4) var(--spacing-12) var(--spacing-4) var(--spacing-12);
     font-size: var(--font-size-base);
     border: 2px solid var(--gray-200);
     border-radius: var(--radius-lg);

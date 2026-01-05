@@ -1,31 +1,42 @@
 import { db } from '$lib/server/db'
 import { items } from '$lib/server/db/schema'
-import { desc } from 'drizzle-orm'
+import { desc, eq, count } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
+import { ItemSchema, ItemUpdateSchema, formatZodError } from '$lib/validators'
+import type { ItemInput, ItemUpdateInput } from '$lib/validators'
 
-const itemSchema = {
-  name: (val: unknown) => typeof val === 'string' && val.length > 0,
-  itemCode: (val: unknown) => typeof val === 'string' && val.length > 0,
-  price: (val: unknown) => typeof val === 'number' && val >= 0,
-  stockQuantity: (val: unknown) => typeof val === 'number' && Number.isInteger(val) && val >= 0,
-  lowStockThreshold: (val: unknown) => typeof val === 'number' && Number.isInteger(val) && val >= 0,
-  category: (val: unknown) => typeof val === 'string' || val === undefined
-}
-
-function validateItem(data: Record<string, unknown>) {
-  const errors: string[] = []
-  if (!itemSchema.name(data.name)) errors.push('Name is required')
-  if (!itemSchema.itemCode(data.itemCode)) errors.push('Item code is required')
-  if (!itemSchema.price(data.price)) errors.push('Price must be a positive number')
-  if (!itemSchema.stockQuantity(data.stockQuantity)) errors.push('Stock quantity must be a non-negative integer')
-  if (!itemSchema.lowStockThreshold(data.lowStockThreshold)) errors.push('Low stock threshold must be a non-negative integer')
-  return errors
-}
-
-export async function GET() {
+export async function GET({ url }: { url: URL }) {
   try {
-    const allItems = await db.select().from(items).orderBy(desc(items.createdAt))
-    return json({ success: true, data: allItems })
+    const page = parseInt(url.searchParams.get('page') || '1')
+    const limit = parseInt(url.searchParams.get('limit') || '10')
+    const offset = (page - 1) * limit
+    
+    const allItems = await db
+      .select({
+        id: items.id,
+        name: items.name,
+        itemCode: items.itemCode,
+        price: items.price,
+        stockQuantity: items.stockQuantity,
+        lowStockThreshold: items.lowStockThreshold,
+        category: items.category,
+        expiryDate: items.expiryDate,
+        createdAt: items.createdAt,
+        updatedAt: items.updatedAt
+      })
+      .from(items)
+      .orderBy(desc(items.createdAt))
+      .limit(limit)
+      .offset(offset)
+    
+    const [totalResult] = await db.select({ count: count() }).from(items)
+    const total = totalResult?.count || 0
+    
+    return json({
+      success: true,
+      data: allItems,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+    })
   } catch (error) {
     console.error('Error fetching items:', error)
     return json({ success: false, error: 'Failed to fetch items' }, { status: 500 })
@@ -34,25 +45,48 @@ export async function GET() {
 
 export async function POST({ request }: { request: Request }) {
   try {
-    const body = await request.json()
-    const errors = validateItem(body)
-    if (errors.length > 0) {
-      return json({ success: false, error: errors.join(', ') }, { status: 400 })
-    }
+    const body: unknown = await request.json()
     
-    const result = await db.insert(items).values({
-      name: body.name,
-      itemCode: body.itemCode,
-      price: body.price,
-      stockQuantity: body.stockQuantity,
-      lowStockThreshold: body.lowStockThreshold,
-      category: body.category || null,
-      expiryDate: null,
+    const result = ItemSchema.safeParse(body)
+    
+    if (!result.success) {
+      const errors = formatZodError(result.error)
+      return json({
+        success: false,
+        error: 'Validation failed',
+        validationErrors: errors
+      }, { status: 400 })
+    }
+
+    const data = result.data as ItemInput
+    
+    const existingItem = await db
+      .select()
+      .from(items)
+      .where(eq(items.itemCode, data.itemCode))
+      .get()
+
+    if (existingItem) {
+      return json({
+        success: false,
+        error: 'Item code already exists',
+        validationErrors: [{ field: 'itemCode', message: 'An item with this code already exists' }]
+      }, { status: 409 })
+    }
+
+    const resultData = await db.insert(items).values({
+      name: data.name,
+      itemCode: data.itemCode,
+      price: data.price,
+      stockQuantity: data.stockQuantity,
+      lowStockThreshold: data.lowStockThreshold,
+      category: data.category ?? null,
+      expiryDate: data.expiryDate ?? null,
       createdAt: new Date(),
       updatedAt: new Date()
     }).returning()
     
-    return json({ success: true, data: result[0] }, { status: 201 })
+    return json({ success: true, data: resultData[0] }, { status: 201 })
   } catch (error) {
     console.error('Error creating item:', error)
     return json({ success: false, error: 'Failed to create item' }, { status: 500 })

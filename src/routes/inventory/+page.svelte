@@ -505,7 +505,7 @@
                 step="0.01" 
                 min="0"
                 bind:value={formData.price}
-                class="input {currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'} {formErrors.price ? 'border-red-500' : ''}"
+                 class="input {currencySymbol($settings.currency).length === 3 ? 'pl-16' : currencySymbol($settings.currency).length > 1 ? 'pl-14' : 'pl-10'} {formErrors.price ? 'border-red-500' : ''}"
                 placeholder="0.00"
                 disabled={isSubmitting}
               />

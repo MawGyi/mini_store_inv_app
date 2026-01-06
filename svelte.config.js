@@ -5,9 +5,8 @@ export default {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      runtime: 'nodejs22.x',
-      regions: ['iad1'],
-      split: true
+      runtime: 'edge',
+      regions: ['iad1']
     }),
     alias: {
       $lib: './src/lib',

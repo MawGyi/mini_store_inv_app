@@ -283,8 +283,8 @@
     </main>
     
     {#if isMobileMenuOpen}
-      <div class="fixed inset-0 z-50 lg:hidden">
-        <div class="fixed inset-0 bg-black/50" on:click={() => isMobileMenuOpen = false}></div>
+      <div class="fixed inset-0 z-50 lg:hidden" role="presentation" on:click={() => isMobileMenuOpen = false} on:keydown={(e) => e.key === 'Escape' && (isMobileMenuOpen = false)}>
+        <div class="fixed inset-0 bg-black/50" role="button" tabindex="-1" aria-label="Close menu" on:click={() => isMobileMenuOpen = false} on:keydown={(e) => e.key === 'Escape' && (isMobileMenuOpen = false)}></div>
         <div class="fixed left-0 top-0 h-full w-64 bg-white shadow-xl">
           <div class="flex items-center justify-between h-16 px-4 border-b border-gray-100">
             <span class="text-lg font-bold text-gray-900">{$settings.storeName}</span>

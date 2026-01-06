@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { db } from '$lib/server/db'
 import { items } from '$lib/server/db/schema'
-import { desc } from 'drizzle-orm'
+import { eq, desc, sql, count, sum } from 'drizzle-orm'
 
 export const GET: RequestHandler = async ({ url }) => {
   try {
@@ -17,59 +17,51 @@ export const GET: RequestHandler = async ({ url }) => {
       stockQuantity: items.stockQuantity,
       lowStockThreshold: items.lowStockThreshold,
       category: items.category,
-      expiryDate: items.expiryDate,
-      createdAt: items.createdAt,
-      updatedAt: items.updatedAt
+      createdAt: items.createdAt
     })
       .from(items)
-      .orderBy(desc(items.id))
 
-    let allItems: typeof items.$inferSelect[] = []
-    
-    try {
-      allItems = await query
-    } catch (e) {
-      allItems = []
-    }
-
-    let filteredItems = allItems
+    let allItems: Array<{
+      id: number
+      name: string
+      itemCode: string
+      price: number
+      stockQuantity: number
+      lowStockThreshold: number
+      category: string | null
+      createdAt: Date
+    }>
 
     if (category && category !== 'all') {
-      filteredItems = filteredItems.filter(i => i.category === category)
-    }
-
-    if (status) {
-      if (status === 'low_stock') {
-        filteredItems = filteredItems.filter(i => i.stockQuantity <= i.lowStockThreshold)
-      } else if (status === 'out_of_stock') {
-        filteredItems = filteredItems.filter(i => i.stockQuantity === 0)
-      } else if (status === 'in_stock') {
-        filteredItems = filteredItems.filter(i => i.stockQuantity > i.lowStockThreshold)
+      if (category === '') {
+        allItems = await query.where(sql`${items.category} IS NULL`)
+      } else {
+        allItems = await query.where(eq(items.category, category))
       }
+    } else {
+      allItems = await query
     }
 
-    const totalItems = filteredItems.length
-    const totalStock = filteredItems.reduce((sum, i) => sum + i.stockQuantity, 0)
-    const totalValue = filteredItems.reduce((sum, i) => sum + (i.price * i.stockQuantity), 0)
-    const lowStockCount = filteredItems.filter(i => i.stockQuantity <= i.lowStockThreshold).length
-    const outOfStockCount = filteredItems.filter(i => i.stockQuantity === 0).length
-
-    const byCategory: Record<string, number> = {}
-    for (const item of filteredItems) {
-      const cat = item.category || 'Uncategorized'
-      byCategory[cat] = (byCategory[cat] || 0) + 1
+    if (status === 'in_stock') {
+      allItems = allItems.filter(i => i.stockQuantity > i.lowStockThreshold)
+    } else if (status === 'low_stock') {
+      allItems = allItems.filter(i => i.stockQuantity > 0 && i.stockQuantity <= i.lowStockThreshold)
+    } else if (status === 'out_of_stock') {
+      allItems = allItems.filter(i => i.stockQuantity === 0)
     }
+
+    const totalStock = allItems.reduce((sum, item) => sum + item.stockQuantity, 0)
+    const totalValue = allItems.reduce((sum, item) => sum + (item.price * item.stockQuantity), 0)
+    const lowStockCount = allItems.filter(i => i.stockQuantity > 0 && i.stockQuantity <= i.lowStockThreshold).length
 
     return json({
       summary: {
-        totalItems,
+        totalItems: allItems.length,
         totalStock,
         totalValue: Math.round(totalValue * 100) / 100,
-        lowStockCount,
-        outOfStockCount,
-        byCategory
+        lowStockCount
       },
-      items: filteredItems
+      items: allItems
     })
   } catch (error) {
     console.error('Error generating inventory report:', error)

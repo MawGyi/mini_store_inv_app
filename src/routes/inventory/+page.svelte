@@ -427,7 +427,7 @@
 
 <!-- Add/Edit Item Modal -->
 {#if showModal}
-  <div class="modal-overlay" on:click={closeModal}>
+  <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="item-modal-title" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
     <div class="modal max-w-xl w-full" on:click|stopPropagation>
       <div class="modal-header">
         <h2 class="text-xl font-semibold text-gray-900">

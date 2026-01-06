@@ -41,7 +41,7 @@
         itemsRes.json()
       ])
       
-      if (overviewData.success) overview = overviewData.data
+      if (overviewData.success) overview = overviewData.data.overview
       if (trendsData.success) salesTrends = trendsData.data
       if (topData.success) topSelling = topData.data
       if (alertsData.success) alerts = alertsData.data
@@ -226,7 +226,7 @@
           </span>
         </div>
         <p class="text-sm font-medium text-gray-500 mb-1">Total Sales</p>
-        <p class="text-2xl font-bold text-gray-900">{formatCurrency(overview.totalSales, $settings.currency)}</p>
+        <p class="text-2xl font-bold text-gray-900">{formatCurrency(overview?.totalSales ?? 0, $settings.currency)}</p>
       </div>
       
       <!-- Transactions -->
@@ -237,12 +237,12 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {overview.todaySales > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
-            {overview.todaySales > 0 ? 'Today' : 'No sales'}
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {(overview?.todaySales ?? 0) > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+            {(overview?.todaySales ?? 0) > 0 ? 'Today' : 'No sales'}
           </span>
         </div>
         <p class="text-sm font-medium text-gray-500 mb-1">Transactions</p>
-        <p class="text-2xl font-bold text-gray-900">{overview.totalTransactions}</p>
+        <p class="text-2xl font-bold text-gray-900">{overview?.totalTransactions ?? 0}</p>
       </div>
       
       <!-- Monthly Sales -->
@@ -258,7 +258,7 @@
           </span>
         </div>
         <p class="text-sm font-medium text-gray-500 mb-1">Monthly Sales</p>
-        <p class="text-2xl font-bold text-gray-900">{formatCurrency(overview.monthSales, $settings.currency)}</p>
+        <p class="text-2xl font-bold text-gray-900">{formatCurrency(overview?.monthSales ?? 0, $settings.currency)}</p>
       </div>
       
       <!-- Low Stock -->
@@ -269,7 +269,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          {#if overview.lowStockItems > 0}
+          {#if (overview?.lowStockItems ?? 0) > 0}
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
               Alert
             </span>
@@ -280,7 +280,7 @@
           {/if}
         </div>
         <p class="text-sm font-medium text-gray-500 mb-1">Low Stock Items</p>
-        <p class="text-2xl font-bold text-gray-900">{overview.lowStockItems}</p>
+        <p class="text-2xl font-bold text-gray-900">{overview?.lowStockItems ?? 0}</p>
         <a href="/inventory" class="text-sm text-amber-600 hover:text-amber-700 font-medium mt-2 inline-block">
           View inventory →
         </a>
@@ -322,7 +322,7 @@
                         ></div>
                       </div>
                       <div class="w-24 text-right">
-                        <p class="text-sm font-semibold text-gray-900">{formatCurrency(sale.totalSales, $settings.currency)}</p>
+                          <p class="text-sm font-semibold text-gray-900">{formatCurrency(sale.totalSales ?? 0, $settings.currency)}</p>
                         <p class="text-xs text-gray-500">{sale.transactionCount} sales</p>
                       </div>
                     </div>
@@ -363,7 +363,7 @@
                   <p class="text-xs text-gray-500">{item.totalQuantity} units sold</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-sm font-bold text-gray-900">{formatCurrency(item.totalRevenue, $settings.currency)}</p>
+                  <p class="text-sm font-bold text-gray-900">{formatCurrency(item.totalRevenue ?? 0, $settings.currency)}</p>
                 </div>
               </div>
             {/each}

@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db'
-import { items } from '$lib/server/db/schema'
+import { items } from '$lib/server/db'
 import { desc, eq, count, like, or } from 'drizzle-orm'
 import { sql } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'

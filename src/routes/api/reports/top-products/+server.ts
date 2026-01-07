@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { db } from '$lib/server/db'
-import { items, saleItems, sales } from '$lib/server/db/schema'
+import { items, saleItems, sales } from '$lib/server/db'
 import { eq, desc, sum, gte, sql } from 'drizzle-orm'
 
 export const GET: RequestHandler = async ({ url }) => {

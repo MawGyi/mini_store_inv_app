@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import type { RequestHandler } from '@sveltejs/kit'
-import { db, client } from '$lib/server/db'
-import { items, sales, saleItems, categories } from '$lib/server/db/schema'
+import { db } from '$lib/server/db'
+import { items, sales, saleItems, categories } from '$lib/server/db'
 import { eq, desc, sql, count, gte, asc, sum } from 'drizzle-orm'
 import { ItemSchema, ItemUpdateSchema, SaleSchema, formatZodError } from '$lib/validators'
 import { checkRateLimit, constantTimeEqual, validateEmail, generateSecureToken } from '$lib/server/security'
@@ -221,7 +221,7 @@ app.post('/items', async (c) => {
       return json(c, { success: false, error: 'Validation failed', validationErrors: formatZodError(result.error) }, { status: 400 })
     }
     const data = result.data
-    const existingItem = await db.select().from(items).where(eq(items.itemCode, data.itemCode)).get()
+    const existingItem = await db.select().from(items).where(eq(items.itemCode, data.itemCode)).then(rows => rows[0])
     if (existingItem) {
       return json(c, {
         success: false,
@@ -253,7 +253,7 @@ app.get('/items/:id', async (c) => {
     if (isNaN(id)) {
       return json(c, { success: false, error: 'Invalid item ID' }, { status: 400 })
     }
-    const item = await db.select().from(items).where(eq(items.id, id)).get()
+    const item = await db.select().from(items).where(eq(items.id, id)).then(rows => rows[0])
     if (!item) {
       return json(c, { success: false, error: 'Item not found' }, { status: 404 })
     }
@@ -276,12 +276,12 @@ app.put('/items/:id', async (c) => {
       return json(c, { success: false, error: 'Validation failed', validationErrors: formatZodError(result.error) }, { status: 400 })
     }
     const data = result.data
-    const existingItem = await db.select().from(items).where(eq(items.id, id)).get()
+    const existingItem = await db.select().from(items).where(eq(items.id, id)).then(rows => rows[0])
     if (!existingItem) {
       return json(c, { success: false, error: 'Item not found' }, { status: 404 })
     }
     if (data.itemCode && data.itemCode !== existingItem.itemCode) {
-      const duplicateItem = await db.select().from(items).where(eq(items.itemCode, data.itemCode)).get()
+      const duplicateItem = await db.select().from(items).where(eq(items.itemCode, data.itemCode)).then(rows => rows[0])
       if (duplicateItem) {
         return json(c, {
           success: false,
@@ -312,7 +312,7 @@ app.delete('/items/:id', async (c) => {
     if (isNaN(id)) {
       return json(c, { success: false, error: 'Invalid item ID' }, { status: 400 })
     }
-    const existingItem = await db.select().from(items).where(eq(items.id, id)).get()
+    const existingItem = await db.select().from(items).where(eq(items.id, id)).then(rows => rows[0])
     if (!existingItem) {
       return json(c, { success: false, error: 'Item not found' }, { status: 404 })
     }
@@ -370,7 +370,7 @@ app.post('/sales', async (c) => {
       const saleItemsData: SaleItemData[] = []
       let totalAmount = 0
       for (const item of req.items) {
-        const itemExists = await tx.select({ id: items.id, name: items.name, stockQuantity: items.stockQuantity }).from(items).where(eq(items.id, item.itemId)).get()
+        const itemExists = await tx.select({ id: items.id, name: items.name, stockQuantity: items.stockQuantity }).from(items).where(eq(items.id, item.itemId)).then(rows => rows[0])
         if (!itemExists) {
           throw new Error(`Item with ID ${item.itemId} not found`)
         }
@@ -400,7 +400,7 @@ app.post('/sales', async (c) => {
         await tx.insert(saleItems).values({ saleId, itemId: item.itemId, quantity: item.quantity, unitPrice: item.unitPrice, totalPrice: item.totalPrice })
         await tx.update(items).set({ stockQuantity: sql`${items.stockQuantity} - ${item.quantity}`, updatedAt: now }).where(eq(items.id, item.itemId))
       }
-      const createdSale = await tx.select({ id: sales.id, saleDate: sales.saleDate, totalAmount: sales.totalAmount, paymentMethod: sales.paymentMethod, customerName: sales.customerName, invoiceNumber: sales.invoiceNumber, createdAt: sales.createdAt, updatedAt: sales.updatedAt }).from(sales).where(eq(sales.id, saleId)).get()
+      const createdSale = await tx.select({ id: sales.id, saleDate: sales.saleDate, totalAmount: sales.totalAmount, paymentMethod: sales.paymentMethod, customerName: sales.customerName, invoiceNumber: sales.invoiceNumber, createdAt: sales.createdAt, updatedAt: sales.updatedAt }).from(sales).where(eq(sales.id, saleId)).then(rows => rows[0])
       const createdSaleItems = await tx.select({ id: saleItems.id, saleId: saleItems.saleId, itemId: saleItems.itemId, itemName: items.name, quantity: saleItems.quantity, unitPrice: saleItems.unitPrice, totalPrice: saleItems.totalPrice }).from(saleItems).innerJoin(items, eq(saleItems.itemId, items.id)).where(eq(saleItems.saleId, saleId)).then((rows: any[]) => rows.map((row) => ({ id: row.id, saleId: row.saleId ?? saleId, itemId: row.itemId ?? 0, itemName: row.itemName, quantity: row.quantity, unitPrice: row.unitPrice, totalPrice: row.totalPrice })))
       return { sale: createdSale, items: createdSaleItems }
     })
@@ -418,7 +418,7 @@ app.get('/sales/:id', async (c) => {
     if (isNaN(id)) {
       return json(c, { success: false, error: 'Invalid sale ID' }, { status: 400 })
     }
-    const sale = await db.select().from(sales).where(eq(sales.id, id)).get()
+    const sale = await db.select().from(sales).where(eq(sales.id, id)).then(rows => rows[0])
     if (!sale) {
       return json(c, { success: false, error: 'Sale not found' }, { status: 404 })
     }
@@ -779,10 +779,10 @@ app.get('/export/items', async (c) => {
 
 app.post('/import/clear-all', async (c) => {
   try {
-    await client.execute('DELETE FROM sale_items')
-    await client.execute('DELETE FROM sales')
-    await client.execute('DELETE FROM items')
-    await client.execute('DELETE FROM categories')
+    await db.execute(sql`DELETE FROM sale_items`)
+    await db.execute(sql`DELETE FROM sales`)
+    await db.execute(sql`DELETE FROM items`)
+    await db.execute(sql`DELETE FROM categories`)
     return json(c, { message: 'All data cleared successfully' })
   } catch (error) {
     console.error('Error clearing data:', error)
@@ -828,7 +828,7 @@ app.post('/import/items', async (c) => {
         continue
       }
       try {
-        const existingItem = await db.select().from(items).where(eq(items.itemCode, itemCode)).get()
+        const existingItem = await db.select().from(items).where(eq(items.itemCode, itemCode)).then(rows => rows[0])
         if (existingItem) {
           await db.update(items).set({ name, price, stockQuantity, lowStockThreshold, category: category || null, updatedAt: new Date(now) }).where(eq(items.id, existingItem.id))
         } else {

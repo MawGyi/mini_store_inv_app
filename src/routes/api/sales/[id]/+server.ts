@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db'
-import { sales, saleItems, items } from '$lib/server/db/schema'
+import { sales, saleItems, items } from '$lib/server/db'
 import { eq } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 import type { SaleWithItems } from '$lib/types'

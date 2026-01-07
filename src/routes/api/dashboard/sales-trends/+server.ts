@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db'
-import { sales } from '$lib/server/db/schema'
+import { sales } from '$lib/server/db'
 import { gte, asc, sql, sum, count } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 

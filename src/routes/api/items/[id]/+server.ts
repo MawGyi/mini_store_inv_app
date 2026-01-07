@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db'
-import { items } from '$lib/server/db/schema'
+import { items } from '$lib/server/db'
 import { eq } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 import { ItemUpdateSchema, formatZodError } from '$lib/validators'

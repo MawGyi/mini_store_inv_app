@@ -105,9 +105,55 @@ class MockStore {
     }
 
     createItem(itemData) {
+        // Validate required fields
+        if (!itemData.name || itemData.name.trim() === '') {
+            throw new Error('Name is required');
+        }
+        if (!itemData.itemCode || itemData.itemCode.trim() === '') {
+            throw new Error('Item code is required');
+        }
+
+        // Validate price (allow zero)
+        if (itemData.price === undefined || itemData.price === null) {
+            throw new Error('Price is required');
+        }
+        const price = parseFloat(itemData.price);
+        if (isNaN(price) || price < 0) {
+            throw new Error('Price must be a non-negative number');
+        }
+
+        // Validate stock quantity (allow zero)
+        if (itemData.stockQuantity !== undefined && itemData.stockQuantity !== null) {
+            const stockQty = parseInt(itemData.stockQuantity);
+            if (isNaN(stockQty) || stockQty < 0) {
+                throw new Error('Stock quantity must be a non-negative integer');
+            }
+        }
+
+        // Validate low stock threshold
+        if (itemData.lowStockThreshold !== undefined && itemData.lowStockThreshold !== null) {
+            const threshold = parseInt(itemData.lowStockThreshold);
+            if (isNaN(threshold) || threshold < 0) {
+                throw new Error('Low stock threshold must be a non-negative integer');
+            }
+        }
+
+        // Check for duplicate item code (case-insensitive)
+        const normalizedItemCode = itemData.itemCode.trim().toUpperCase();
+        const existingItem = this.items.find(item => item.itemCode.trim().toUpperCase() === normalizedItemCode);
+        if (existingItem) {
+            throw new Error('Item code already exists');
+        }
+
         const newItem = {
             _id: this.generateId(),
-            ...itemData,
+            name: itemData.name.trim(),
+            itemCode: itemData.itemCode.trim(),
+            price: price,
+            stockQuantity: itemData.stockQuantity !== undefined ? parseInt(itemData.stockQuantity) : 0,
+            lowStockThreshold: itemData.lowStockThreshold !== undefined ? parseInt(itemData.lowStockThreshold) : 10,
+            category: itemData.category || null,
+            expiryDate: itemData.expiryDate || null,
             createdAt: new Date(),
             updatedAt: new Date()
         };
@@ -118,6 +164,55 @@ class MockStore {
     updateItem(id, updateData) {
         const index = this.items.findIndex(item => item._id === id);
         if (index === -1) return null;
+
+        // Validate name if provided
+        if (updateData.name !== undefined && updateData.name.trim() === '') {
+            throw new Error('Name is required');
+        }
+
+        // Validate price if provided
+        if (updateData.price !== undefined) {
+            const price = parseFloat(updateData.price);
+            if (isNaN(price) || price < 0) {
+                throw new Error('Price must be a non-negative number');
+            }
+            updateData.price = price;
+        }
+
+        // Validate stock quantity if provided
+        if (updateData.stockQuantity !== undefined) {
+            const stockQty = parseInt(updateData.stockQuantity);
+            if (isNaN(stockQty) || stockQty < 0) {
+                throw new Error('Stock quantity must be a non-negative integer');
+            }
+            updateData.stockQuantity = stockQty;
+        }
+
+        // Validate low stock threshold if provided
+        if (updateData.lowStockThreshold !== undefined) {
+            const threshold = parseInt(updateData.lowStockThreshold);
+            if (isNaN(threshold) || threshold < 0) {
+                throw new Error('Low stock threshold must be a non-negative integer');
+            }
+            updateData.lowStockThreshold = threshold;
+        }
+
+        // Trim and validate item code if provided
+        if (updateData.itemCode !== undefined) {
+            const normalizedItemCode = updateData.itemCode.trim().toUpperCase();
+            const existingItem = this.items.find(item => 
+                item._id !== id && item.itemCode.trim().toUpperCase() === normalizedItemCode
+            );
+            if (existingItem) {
+                throw new Error('Item code already exists');
+            }
+            updateData.itemCode = updateData.itemCode.trim();
+        }
+
+        // Trim name if provided
+        if (updateData.name !== undefined) {
+            updateData.name = updateData.name.trim();
+        }
 
         this.items[index] = {
             ...this.items[index],

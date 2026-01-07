@@ -34,6 +34,13 @@
     topProductsStartDate = lastMonth.toISOString().split('T')[0]
     topProductsEndDate = today.toISOString().split('T')[0]
     dailySummaryDays = '30'
+    
+    setTimeout(() => {
+      loadSalesReport()
+      loadInventoryReport()
+      loadTopProductsReport()
+      loadDailySummaryReport()
+    }, 100)
   })
 
   async function loadSalesReport() {

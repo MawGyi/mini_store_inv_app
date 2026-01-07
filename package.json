@@ -11,7 +11,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test": "vitest",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed": "node --experimental-vm-modules --loader ts-node/esm scripts/seed.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

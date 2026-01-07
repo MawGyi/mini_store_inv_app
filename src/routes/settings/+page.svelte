@@ -398,67 +398,135 @@
       Data Management
     </h2>
     
-    <div class="space-y-6">
-      <div>
-        <h3 class="text-sm font-medium text-gray-900 mb-3">Export Data</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button on:click={exportItems} class="btn btn-secondary justify-start">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <!-- Full Backup Card -->
+      <div class="data-card">
+        <div class="data-card-icon success">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900">Full Backup</h3>
+        <p class="text-sm text-gray-500 mt-1">Export all inventory, sales, and categories as JSON</p>
+        <button on:click={exportBackup} class="btn btn-primary w-full mt-4">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Backup
+        </button>
+      </div>
+      
+      <!-- Export Items Card -->
+      <div class="data-card">
+        <div class="data-card-icon primary">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h3 class="font-semibold text-gray-900">Export Items</h3>
+        <p class="text-sm text-gray-500 mt-1">Download all items as CSV spreadsheet</p>
+        <button on:click={exportItems} class="btn btn-secondary w-full mt-4">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download CSV
+        </button>
+      </div>
+      
+        <!-- Export Sales Card -->
+        <div class="data-card">
+          <div class="data-card-icon info">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
-            Export Items (CSV)
-          </button>
-          
-          <div class="flex gap-2">
-            <input type="date" bind:value={salesStartDate} class="input text-sm" />
-            <span class="self-center text-gray-400">to</span>
-            <input type="date" bind:value={salesEndDate} class="input text-sm" />
-            <button on:click={exportSales} class="btn btn-secondary">
-              Export Sales
+          </div>
+          <h3 class="font-semibold text-gray-900">Export Sales</h3>
+          <p class="text-sm text-gray-500 mt-1">Download sales by date range</p>
+          <div class="date-range-container mt-3">
+            <div class="date-inputs">
+              <input type="date" bind:value={salesStartDate} class="input input-sm" aria-label="Start date" />
+              <span class="date-separator">to</span>
+              <input type="date" bind:value={salesEndDate} class="input input-sm" aria-label="End date" />
+            </div>
+            <button on:click={exportSales} class="btn btn-secondary btn-sm w-full mt-2" disabled={!salesStartDate || !salesEndDate}>
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export
             </button>
           </div>
-          
-          <button on:click={exportBackup} class="btn btn-secondary justify-start">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </div>
+    </div>
+    
+    <!-- Import Section -->
+    <div class="mt-6 pt-6 border-t border-gray-100">
+      <h3 class="text-sm font-medium text-gray-900 mb-4">Import Items</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="import-section">
+          <p class="text-sm text-gray-500 mb-3">Upload a CSV file with columns: name, itemcode, price, stockquantity, category, lowstockthreshold</p>
+          <div class="flex flex-wrap gap-3">
+            <label class="btn btn-secondary cursor-pointer">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+              Choose CSV File
+              <input type="file" accept=".csv" on:change={handleImportFile} class="hidden" />
+            </label>
+            
+            <a href="/api/export/items" download="items_template.csv" class="btn btn-secondary">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Template
+            </a>
+          </div>
+          {#if importFile}
+            <p class="text-sm text-green-600 mt-2 flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              {importFile.name} selected
+            </p>
+          {/if}
+        </div>
+        
+        <div class="bg-blue-50 rounded-xl p-4">
+          <h4 class="font-medium text-blue-900 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Full Backup (JSON)
+            Import Tips
+          </h4>
+          <ul class="text-sm text-blue-700 mt-2 space-y-1">
+            <li>• First row must be column headers</li>
+            <li>• Use UTF-8 encoded CSV files</li>
+            <li>• Item codes must be unique</li>
+            <li>• Preview shows errors before import</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Danger Zone -->
+    <div class="mt-6 pt-6 border-t border-red-200">
+      <div class="danger-zone">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-semibold text-red-600">Danger Zone</h3>
+            <p class="text-sm text-gray-500 mt-1">Permanently delete all data including items, sales, and categories. This action cannot be undone.</p>
+          </div>
+          <button on:click={() => showImportModal = true} class="btn btn-danger shrink-0">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Clear All Data
           </button>
         </div>
-      </div>
-      
-      <div class="border-t border-gray-100 pt-6">
-        <h3 class="text-sm font-medium text-gray-900 mb-3">Import Items</h3>
-        <p class="text-sm text-gray-500 mb-3">Upload a CSV file with columns: name, itemcode, price, stockquantity, category, lowstockthreshold</p>
-        
-        <div class="flex flex-wrap gap-3">
-          <label class="btn btn-secondary cursor-pointer">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            Choose CSV File
-            <input type="file" accept=".csv" on:change={handleImportFile} class="hidden" />
-          </label>
-          
-          <a href="/api/export/items" download="items_template.csv" class="btn btn-secondary">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Template
-          </a>
-        </div>
-      </div>
-      
-      <div class="border-t border-gray-100 pt-6">
-        <h3 class="text-sm font-medium text-red-600 mb-3">Danger Zone</h3>
-        <p class="text-sm text-gray-500 mb-3">Permanently delete all data including items, sales, and categories.</p>
-        
-        <button on:click={() => showImportModal = true} class="btn btn-danger">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Clear All Data
-        </button>
       </div>
     </div>
   </div>
@@ -593,3 +661,120 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .data-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: all 0.2s ease;
+  }
+
+  .data-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-color: #d1d5db;
+  }
+
+  .data-card-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .data-card-icon.success {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #16a34a;
+  }
+
+  .data-card-icon.primary {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #2563eb;
+  }
+
+  .data-card-icon.info {
+    background: linear-gradient(135deg, #f3e8ff, #e9d5ff);
+    color: #9333ea;
+  }
+
+  .import-section {
+    background: #f9fafb;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  .danger-zone {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border: 1px solid #fecaca;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+  }
+
+  .date-range-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .date-inputs .input-sm {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.625rem;
+  }
+
+  .date-separator {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .input-sm {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .btn-sm {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .data-card {
+      padding: 1rem;
+    }
+
+    .danger-zone .flex {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .danger-zone .btn {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .date-inputs {
+      flex-direction: column;
+    }
+
+    .date-separator {
+      display: none;
+    }
+
+    .date-inputs .input-sm {
+      width: 100%;
+    }
+  }
+</style>
+

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import type { RequestHandler } from '@sveltejs/kit'
 import { db, client } from '$lib/server/db'
 import { items, sales, saleItems, categories } from '$lib/server/db/schema'
 import { eq, desc, sql, count, gte, asc, sum } from 'drizzle-orm'
@@ -846,7 +847,18 @@ app.post('/import/items', async (c) => {
    }
 })
 
-export const GET = (req: Request) => app.request(req.url, req)
-export const POST = (req: Request) => app.request(req.url, req)
-export const PUT = (req: Request) => app.request(req.url, req)
-export const DELETE = (req: Request) => app.request(req.url, req)
+export const GET: RequestHandler = async ({ request }) => {
+  return app.fetch(request)
+}
+
+export const POST: RequestHandler = async ({ request }) => {
+  return app.fetch(request)
+}
+
+export const PUT: RequestHandler = async ({ request }) => {
+  return app.fetch(request)
+}
+
+export const DELETE: RequestHandler = async ({ request }) => {
+  return app.fetch(request)
+}

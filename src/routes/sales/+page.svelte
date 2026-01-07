@@ -9,11 +9,15 @@
   let items: Item[] = []
   let loading = true
   let showNewSaleModal = false
+  let showBackupModal = false
   let currentPage = 1
   let totalPages = 1
   let selectedSale: SaleWithItems | null = null
   let showDetailModal = false
-  
+  let isBackingUp = false
+  let todayTotal = 0
+  let todayTransactionCount = 0
+
   let newSaleForm = {
     customerName: '',
     paymentMethod: 'cash' as 'cash' | 'credit' | 'mobile_payment',
@@ -26,10 +30,10 @@
   
   $: totalAmount = newSaleForm.items.reduce((sum, item) => sum + item.totalPrice, 0)
   $: itemCount = newSaleForm.items.reduce((sum, item) => sum + item.quantity, 0)
-  
+
   onMount(async () => {
     settings.load()
-    await Promise.all([loadSales(), loadItems()])
+    await Promise.all([loadSales(), loadItems(), loadTodaySales()])
   })
   
   async function loadSales() {
@@ -57,6 +61,59 @@
       }
     } catch (error) {
       console.error('Error loading items:', error)
+    }
+  }
+
+  async function loadTodaySales() {
+    try {
+      const res = await fetch('/api/reports/today-sales')
+      const data = await res.json()
+      if (data.success) {
+        todayTotal = data.data.totalSales
+        todayTransactionCount = data.data.transactionCount
+      }
+    } catch (error) {
+      console.error('Error loading today sales:', error)
+    }
+  }
+  
+  async function backupSales() {
+    isBackingUp = true
+    try {
+      const res = await fetch('/api/sales')
+      const data = await res.json()
+      
+      if (data.success) {
+        const backupData = {
+          exportDate: new Date().toISOString(),
+          version: '1.0',
+          sales: data.data,
+          summary: {
+            totalSales: data.data.length,
+            totalRevenue: data.data.reduce((sum: number, s: Sale) => sum + s.totalAmount, 0),
+            transactionCount: data.data.length
+          }
+        }
+        
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        const dateStr = new Date().toISOString().split('T')[0]
+        a.href = url
+        a.download = `sales-backup-${dateStr}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        
+        addNotification('Sales backup downloaded successfully!', 'success')
+        showBackupModal = false
+      }
+    } catch (error) {
+      console.error('Error creating backup:', error)
+      addNotification('Failed to create backup', 'error')
+    } finally {
+      isBackingUp = false
     }
   }
   
@@ -161,6 +218,7 @@
       
       if (data.success) {
         await loadSales()
+        await loadTodaySales()
         closeNewSaleModal()
         addNotification('Sale completed successfully!', 'success')
       } else {
@@ -261,6 +319,12 @@
       <p class="page-subtitle">Track your sales and transactions.</p>
     </div>
     <div class="flex gap-3">
+      <button on:click={() => showBackupModal = true} class="btn btn-secondary">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+        </svg>
+        Backup
+      </button>
       <button on:click={exportSalesToCsv} class="btn btn-secondary">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -276,51 +340,41 @@
     </div>
   </div>
   
-  <!-- Sales Stats -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <!-- Stats Cards -->
+  <div class="stats-grid">
     <div class="stat-card">
-      <div class="flex items-center gap-4">
-        <div class="stat-icon bg-green-100">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 1 1 18 0z" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Total Sales</p>
-          <p class="text-2xl font-bold text-gray-900">
-            {formatCurrency(sales.reduce((sum, s) => sum + s.totalAmount, 0), $settings.currency)}
-          </p>
-        </div>
+      <div class="stat-icon success">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{formatCurrency(todayTotal, $settings.currency)}</span>
+        <span class="stat-label">Today's Sales</span>
       </div>
     </div>
     
     <div class="stat-card">
-      <div class="flex items-center gap-4">
-        <div class="stat-icon bg-blue-100">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Transactions</p>
-          <p class="text-2xl font-bold text-gray-900">{sales.length}</p>
-        </div>
+      <div class="stat-icon primary">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
       </div>
+        <div class="stat-info">
+          <span class="stat-value">{todayTransactionCount}</span>
+          <span class="stat-label">Transactions Today</span>
+        </div>
     </div>
     
     <div class="stat-card">
-      <div class="flex items-center gap-4">
-        <div class="stat-icon bg-purple-100">
-          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-        </div>
-        <div>
-          <p class="text-sm text-gray-500">Avg. Sale</p>
-          <p class="text-2xl font-bold text-gray-900">
-            {sales.length > 0 ? formatCurrency(sales.reduce((sum, s) => sum + s.totalAmount, 0) / sales.length, $settings.currency) : formatCurrency(0, $settings.currency)}
-          </p>
-        </div>
+      <div class="stat-icon info">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+        </svg>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{sales.length}</span>
+        <span class="stat-label">Showing Sales</span>
       </div>
     </div>
   </div>
@@ -712,3 +766,174 @@
     </div>
   </div>
 {/if}
+
+<!-- Backup Modal -->
+{#if showBackupModal}
+  <div class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="backup-modal-title" on:click={() => showBackupModal = false} on:keydown={(e) => e.key === 'Escape' && (showBackupModal = false)}>
+    <div class="modal max-w-md w-full" on:click|stopPropagation>
+      <div class="modal-header">
+        <h2 class="text-xl font-semibold text-gray-900">
+          <svg class="w-6 h-6 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Backup Sales Data
+        </h2>
+        <button on:click={() => showBackupModal = false} class="btn-icon" aria-label="Close">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <div class="backup-section">
+          <div class="backup-icon success">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Export Sales</h3>
+          <p class="text-sm text-gray-600">Download all sales data as a JSON file for backup or analysis.</p>
+          <button 
+            on:click={backupSales}
+            class="btn btn-primary w-full"
+            disabled={isBackingUp || sales.length === 0}
+          >
+            {#if isBackingUp}
+              <svg class="animate-spin w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Exporting...
+            {:else}
+              <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Backup
+            {/if}
+          </button>
+          {#if sales.length > 0}
+            <p class="text-xs text-gray-500 text-center mt-2">
+              {sales.length} transactions • {formatCurrency(sales.reduce((sum, s) => sum + s.totalAmount, 0), $settings.currency)} total
+            </p>
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<style>
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: white;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .stat-icon.success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+  }
+  
+  .stat-icon.primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+  }
+  
+  .stat-icon.info {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+  }
+  
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .backup-section {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    background: #f9fafb;
+  }
+  
+  .backup-icon {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  
+  @media (max-width: 640px) {
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    
+    .page-header .flex {
+      width: 100%;
+      flex-direction: column;
+    }
+    
+    .page-header .btn {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-card {
+      padding: 1rem;
+      gap: 0.75rem;
+    }
+    
+    .stat-value {
+      font-size: 1.1rem;
+    }
+  }
+</style>

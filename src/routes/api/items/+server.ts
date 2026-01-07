@@ -1,6 +1,7 @@
 import { db } from '$lib/server/db'
 import { items } from '$lib/server/db/schema'
-import { desc, eq, count } from 'drizzle-orm'
+import { desc, eq, count, like, or } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 import { ItemSchema, ItemUpdateSchema, formatZodError } from '$lib/validators'
 import type { ItemInput, ItemUpdateInput } from '$lib/validators'
@@ -8,10 +9,11 @@ import type { ItemInput, ItemUpdateInput } from '$lib/validators'
 export async function GET({ url }: { url: URL }) {
   try {
     const page = parseInt(url.searchParams.get('page') || '1')
-    const limit = parseInt(url.searchParams.get('limit') || '10')
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 100)
     const offset = (page - 1) * limit
+    const search = url.searchParams.get('search') || ''
     
-    const allItems = await db
+    let query = db
       .select({
         id: items.id,
         name: items.name,
@@ -25,11 +27,33 @@ export async function GET({ url }: { url: URL }) {
         updatedAt: items.updatedAt
       })
       .from(items)
+    
+    if (search) {
+      query = query.where(
+        or(
+          like(items.name, `%${search}%`),
+          like(items.itemCode, `%${search}%`)
+        )
+      ) as typeof query
+    }
+    
+    const allItems = await query
       .orderBy(desc(items.createdAt))
       .limit(limit)
       .offset(offset)
     
-    const [totalResult] = await db.select({ count: count() }).from(items)
+    let countQuery = db.select({ count: count() }).from(items)
+    
+    if (search) {
+      countQuery = countQuery.where(
+        or(
+          like(items.name, `%${search}%`),
+          like(items.itemCode, `%${search}%`)
+        )
+      ) as typeof countQuery
+    }
+    
+    const [totalResult] = await countQuery
     const total = totalResult?.count || 0
     
     return json({

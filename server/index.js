@@ -52,14 +52,12 @@ app.get('/api/items/:id', (req, res) => {
 // POST new item
 app.post('/api/items', (req, res) => {
   try {
-    // Basic validation
-    if (!req.body.name || !req.body.itemCode || !req.body.price) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
     const savedItem = mockStore.createItem(req.body);
     res.status(201).json(savedItem);
   } catch (error) {
+    if (error.message.includes('required') || error.message.includes('must be') || error.message.includes('already exists')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(400).json({ error: error.message });
   }
 });
@@ -74,6 +72,9 @@ app.put('/api/items/:id', (req, res) => {
       res.status(404).json({ error: 'Item not found' });
     }
   } catch (error) {
+    if (error.message.includes('required') || error.message.includes('must be') || error.message.includes('already exists')) {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(400).json({ error: error.message });
   }
 });

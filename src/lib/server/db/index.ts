@@ -2,7 +2,7 @@ import { drizzle } from 'drizzle-orm/libsql'
 import { createClient } from '@libsql/client'
 import * as schema from './schema'
 
-const dbPath = process.env.DATABASE_PATH || ':memory:'
+const dbPath = process.env.DATABASE_PATH || 'sqlite.db'
 
 const client = createClient({
   url: `file:${dbPath}`

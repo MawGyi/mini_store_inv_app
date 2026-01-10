@@ -14,7 +14,7 @@ export async function GET({ url }: { url: URL }) {
   })
   .from(saleItems)
   .innerJoin(items, eq(saleItems.itemId, items.id))
-  .groupBy(saleItems.itemId)
+  .groupBy(sql`${saleItems.itemId}, ${items.name}`)
   .orderBy(desc(sum(saleItems.quantity)))
   .limit(limit)
   

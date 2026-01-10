@@ -22,15 +22,19 @@ export async function GET({ url }: { url: URL }) {
   try {
     switch (action) {
       case 'overview':
-        return handleOverview()
+        return await handleOverview()
       case 'alerts':
-        return handleAlerts()
+        return await handleAlerts()
       default:
         return json({ success: false, error: 'Unknown action' }, { status: 400 })
     }
   } catch (error) {
     console.error('Dashboard API error:', error)
-    return json({ success: false, error: 'Internal server error' }, { status: 500 })
+    return json({ 
+      success: false, 
+      error: 'Database connection failed. Please ensure Vercel Postgres is configured.',
+      details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+    }, { status: 500 })
   }
 }
 

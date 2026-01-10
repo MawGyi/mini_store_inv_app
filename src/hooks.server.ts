@@ -1,5 +1,4 @@
 import { initializeDatabase } from '$lib/server/db'
-import { client } from '$lib/server/db'
 import type { Handle } from '@sveltejs/kit'
 
 let initialized = false

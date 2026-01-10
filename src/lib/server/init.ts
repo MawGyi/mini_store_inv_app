@@ -1,11 +1,11 @@
 import { sql } from 'drizzle-orm'
-import { initializeDatabase, db, items, sales } from '$lib/server/db'
+import { db, initializeDatabase, items } from '$lib/server/db'
 import { seedDatabase } from '$lib/server/db/seed'
 
 async function init() {
   try {
-    console.log('Initializing database...')
-    initializeDatabase()
+    console.log('Checking database connection...')
+    await initializeDatabase()
     
     const count = await db.select({ count: sql`count(*)` }).from(items).then(r => r[0]?.count || 0)
     
@@ -19,7 +19,6 @@ async function init() {
     console.log('Server initialization complete')
   } catch (error) {
     console.error('Error initializing server:', error)
-    process.exit(1)
   }
 }
 

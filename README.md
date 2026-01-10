@@ -260,3 +260,92 @@ MIT License - feel free to use this project for personal or commercial purposes.
 ## Support
 
 For issues and feature requests, please open a GitHub issue.
+
+---
+
+## Deployment with Vercel + Neon Postgres
+
+This project is configured for deployment on Vercel using Neon Serverless Postgres as the database.
+
+### Prerequisites
+
+1. **GitHub Account** - For version control
+2. **Neon Account** - Free database at https://neon.tech
+3. **Vercel Account** - For hosting at https://vercel.com
+
+### Step 1: Create Neon Database
+
+1. Go to https://neon.tech and sign up with GitHub
+2. Create a new project:
+   - Name: `mini-store-inv`
+   - Region: Select closest to your users (recommended: `us-east-1`)
+   - Compute: Free tier
+3. Copy the connection string from "Connection Details" tab
+4. **Important**: Add `?sslmode=require` to the connection string
+
+### Step 2: Push to GitHub
+
+```bash
+# Initialize git (if not already done)
+git init
+git add .
+git commit -m "Initial commit - Mini Store Inventory App"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/mini-store-inv.git
+git push -u origin main
+```
+
+### Step 3: Connect to Vercel
+
+1. Go to https://vercel.com/dashboard
+2. Click "Add New" → "Project"
+3. Import your GitHub repository: `mini-store-inv`
+4. Vercel auto-detects SvelteKit settings
+5. Click "Deploy"
+
+### Step 4: Configure Environment Variables
+
+1. In Vercel project, go to **Settings** → **Environment Variables**
+2. Add the following variables (select all environments):
+
+| Variable | Value |
+|----------|-------|
+| `POSTGRES_URL` | `postgres://user:password@ep-xxx.../mini_store_inv_app?sslmode=require` |
+| `POSTGRES_HOST` | `ep-xxx.us-east-1.aws.neon.tech` |
+| `POSTGRES_USER` | Your Neon username |
+| `POSTGRES_PASSWORD` | Your Neon password |
+| `POSTGRES_DATABASE` | `mini_store_inv_app` |
+
+3. Click **Save**
+4. Go to **Deployments** → Redeploy
+
+### Step 5: Verify Deployment
+
+1. Check deployment logs for:
+   - "Initializing database..."
+   - "Database tables created successfully"
+2. Visit your app URL
+3. Login with demo credentials:
+   - Email: `admin@ministore.com`
+   - Password: `admin123`
+
+### Future Updates
+
+When you make code changes:
+
+```bash
+git add .
+git commit -m "Describe your changes"
+git push origin main
+```
+
+Vercel automatically detects the push and redeploys.
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Empty dashboard | Check Vercel logs for database initialization |
+| Connection refused | Verify `POSTGRES_URL` has `?sslmode=require` |
+| Build fails | Run `npm run build` locally to see errors |
+| Env vars not working | Redeploy after adding environment variables |

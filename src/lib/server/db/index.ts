@@ -42,7 +42,7 @@ export const categories = pgTable('categories', {
   createdAt: timestamp('created_at').notNull()
 })
 
-export const db = drizzle(sql)
+export const db = drizzle(sqlClient)
 
 let initialized = false
 

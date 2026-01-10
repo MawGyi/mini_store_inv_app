@@ -12,7 +12,8 @@ export async function GET({ params }: { params: { id: string } }) {
       return json({ success: false, error: 'Invalid item ID' }, { status: 400 })
     }
 
-    const item = await db.select().from(items).where(eq(items.id, id)).get()
+    const itemsResult = await db.select().from(items).where(eq(items.id, id)).limit(1)
+    const item = itemsResult[0]
     if (!item) {
       return json({ success: false, error: 'Item not found' }, { status: 404 })
     }
@@ -46,17 +47,20 @@ export async function PUT({ request, params }: { request: Request; params: { id:
 
     const data = result.data as Partial<ItemUpdateInput>
     
-    const existingItem = await db.select().from(items).where(eq(items.id, id)).get()
+    const existingItems = await db.select().from(items).where(eq(items.id, id)).limit(1)
+    const existingItem = existingItems[0]
     if (!existingItem) {
       return json({ success: false, error: 'Item not found' }, { status: 404 })
     }
 
     if (data.itemCode && data.itemCode !== existingItem.itemCode) {
-      const duplicateItem = await db
+      const duplicateItems = await db
         .select()
         .from(items)
         .where(eq(items.itemCode, data.itemCode))
-        .get()
+        .limit(1)
+
+      const duplicateItem = duplicateItems[0]
 
       if (duplicateItem) {
         return json({
@@ -98,7 +102,8 @@ export async function DELETE({ params }: { params: { id: string } }) {
       return json({ success: false, error: 'Invalid item ID' }, { status: 400 })
     }
 
-    const existingItem = await db.select().from(items).where(eq(items.id, id)).get()
+    const existingItems = await db.select().from(items).where(eq(items.id, id)).limit(1)
+    const existingItem = existingItems[0]
     if (!existingItem) {
       return json({ success: false, error: 'Item not found' }, { status: 404 })
     }

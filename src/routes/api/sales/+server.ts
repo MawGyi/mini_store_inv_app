@@ -100,7 +100,7 @@ export async function POST({ request }: { request: Request }) {
       let totalAmount = 0
 
       for (const item of req.items) {
-        const itemExists = await tx
+        const itemResults = await tx
           .select({
             id: items.id,
             name: items.name,
@@ -108,7 +108,9 @@ export async function POST({ request }: { request: Request }) {
           })
           .from(items)
           .where(eq(items.id, item.itemId))
-          .get()
+          .limit(1)
+
+        const itemExists = itemResults[0]
 
         if (!itemExists) {
           throw new Error(`Item with ID ${item.itemId} not found`)
@@ -172,7 +174,7 @@ export async function POST({ request }: { request: Request }) {
           .where(eq(items.id, item.itemId))
       }
 
-      const createdSale = await tx
+      const createdSaleResult = await tx
         .select({
           id: sales.id,
           saleDate: sales.saleDate,
@@ -185,7 +187,9 @@ export async function POST({ request }: { request: Request }) {
         })
         .from(sales)
         .where(eq(sales.id, saleId))
-        .get()
+        .limit(1)
+
+      const createdSale = createdSaleResult[0]
 
       const createdSaleItems = await tx
         .select({

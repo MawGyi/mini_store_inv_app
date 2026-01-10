@@ -84,11 +84,13 @@ export async function POST({ request }: { request: Request }) {
 
     const data = result.data as ItemInput
     
-    const existingItem = await db
+    const existingItems = await db
       .select()
       .from(items)
       .where(eq(items.itemCode, data.itemCode))
-      .get()
+      .limit(1)
+
+    const existingItem = existingItems[0]
 
     if (existingItem) {
       return json({

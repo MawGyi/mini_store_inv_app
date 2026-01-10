@@ -11,7 +11,8 @@ export async function GET({ params }: { params: { id: string } }) {
       return json({ success: false, error: 'Invalid sale ID' }, { status: 400 })
     }
 
-    const sale = await db.select().from(sales).where(eq(sales.id, id)).get()
+    const salesResult = await db.select().from(sales).where(eq(sales.id, id)).limit(1)
+    const sale = salesResult[0]
     if (!sale) {
       return json({ success: false, error: 'Sale not found' }, { status: 404 })
     }

@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { db } from '$lib/server/db'
 import { sales, saleItems } from '$lib/server/db'
-import { gte, asc, sql, sum, count } from 'drizzle-orm'
+import { gte, asc, sql, sum, count, and, lte } from 'drizzle-orm'
 
 export const GET: RequestHandler = async ({ url }) => {
   try {
@@ -10,20 +10,24 @@ export const GET: RequestHandler = async ({ url }) => {
     const startDateParam = url.searchParams.get('startDate')
     const endDateParam = url.searchParams.get('endDate')
 
-    const endDate = endDateParam ? new Date(endDateParam).getTime() : Date.now()
+    const now = new Date()
+    const endDate = endDateParam ? new Date(endDateParam) : now
     const startDate = startDateParam 
-      ? new Date(startDateParam).getTime()
-      : endDate - (days * 24 * 60 * 60 * 1000)
+      ? new Date(startDateParam)
+      : new Date(now.getTime() - (days * 24 * 60 * 60 * 1000))
 
     const dailyData = await db.select({
-      date: sql<string>`DATE(${sales.saleDate} / 1000, 'unixepoch')`.as('date'),
+      date: sql<string>`DATE_TRUNC('day', ${sales.saleDate})::date`.as('date'),
       totalSales: sum(sales.totalAmount).mapWith(Number),
       transactionCount: count()
     })
       .from(sales)
-      .where(sql`${sales.saleDate} >= ${startDate} AND ${sales.saleDate} < ${endDate}`)
-      .groupBy(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`)
-      .orderBy(asc(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`))
+      .where(and(
+        gte(sales.saleDate, startDate),
+        lte(sales.saleDate, endDate)
+      ))
+      .groupBy(sql`DATE_TRUNC('day', ${sales.saleDate})::date`)
+      .orderBy(asc(sql`DATE_TRUNC('day', ${sales.saleDate})::date`))
 
     const totalRevenue = dailyData.reduce((sum, d) => sum + (d.totalSales || 0), 0)
     const totalTransactions = dailyData.reduce((sum, d) => sum + (d.transactionCount || 0), 0)

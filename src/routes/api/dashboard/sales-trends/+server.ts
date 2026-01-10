@@ -9,14 +9,14 @@ export async function GET({ url }: { url: URL }) {
   startDate.setDate(startDate.getDate() - days)
   
   const salesTrends = await db.select({
-    date: sql<string>`DATE(${sales.saleDate} / 1000, 'unixepoch')`.as('date'),
+    date: sql<string>`DATE_TRUNC('day', ${sales.saleDate})::date`.as('date'),
     totalSales: sum(sales.totalAmount).mapWith(Number),
     transactionCount: count()
   })
   .from(sales)
   .where(gte(sales.saleDate, startDate))
-  .groupBy(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`)
-  .orderBy(asc(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`))
+  .groupBy(sql`DATE_TRUNC('day', ${sales.saleDate})::date`)
+  .orderBy(asc(sql`DATE_TRUNC('day', ${sales.saleDate})::date`))
   
   return json({ success: true, data: salesTrends })
 }

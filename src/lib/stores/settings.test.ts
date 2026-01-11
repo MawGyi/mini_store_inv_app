@@ -203,4 +203,157 @@ describe('currencySymbol', () => {
   it('should return the currency code for unknown currency', () => {
     expect(currencySymbol('XYZ')).toBe('XYZ');
   });
+
+  it('should handle empty string currency', () => {
+    expect(currencySymbol('')).toBe('');
+  });
+});
+
+describe('Settings Store Edge Cases', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+    settings.reset();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    cleanup();
+  });
+
+  it('should preserve existing settings when updating partial', () => {
+    settings.update(s => ({ ...s, storeName: 'Test Store' }));
+    settings.update(s => ({ ...s, currency: 'EUR' }));
+    const current = get(settings);
+    expect(current.storeName).toBe('Test Store');
+    expect(current.currency).toBe('EUR');
+    expect(current.storeAddress).toBe('123 Main Street, City');
+  });
+
+  it('should handle very long store name', () => {
+    const longName = 'A'.repeat(100);
+    settings.update(s => ({ ...s, storeName: longName }));
+    expect(get(settings).storeName).toBe(longName);
+  });
+
+  it('should handle special characters in store name', () => {
+    const specialName = "Store & Co.'s @ #1 Shop!";
+    settings.update(s => ({ ...s, storeName: specialName }));
+    expect(get(settings).storeName).toBe(specialName);
+  });
+
+  it('should handle unicode characters in store address', () => {
+    const unicodeAddress = '東京、日本';
+    settings.update(s => ({ ...s, storeAddress: unicodeAddress }));
+    expect(get(settings).storeAddress).toBe(unicodeAddress);
+  });
+
+  it('should handle large low stock threshold', () => {
+    settings.update(s => ({ ...s, lowStockThreshold: 1000 }));
+    expect(get(settings).lowStockThreshold).toBe(1000);
+  });
+
+  it('should handle zero low stock threshold', () => {
+    settings.update(s => ({ ...s, lowStockThreshold: 0 }));
+    expect(get(settings).lowStockThreshold).toBe(0);
+  });
+
+  it('should persist settings across multiple updates', () => {
+    settings.update(s => ({ ...s, storeName: 'Store 1', currency: 'EUR' }));
+    settings.update(s => ({ ...s, storeName: 'Store 2' }));
+    settings.update(s => ({ ...s, storeName: 'Store 3' }));
+    expect(get(settings).storeName).toBe('Store 3');
+    expect(get(settings).currency).toBe('EUR');
+  });
+
+  it('should handle invalid localStorage data gracefully', () => {
+    localStorage.setItem('app_settings', 'invalid json');
+    settings.load();
+    const current = get(settings);
+    expect(current.storeName).toBe('Mini Store');
+    expect(current.currency).toBe('USD');
+  });
+
+  it('should handle partial localStorage data', () => {
+    localStorage.setItem('app_settings', JSON.stringify({ storeName: 'Partial Store' }));
+    settings.load();
+    const current = get(settings);
+    expect(current.storeName).toBe('Partial Store');
+    expect(current.currency).toBe('USD');
+  });
+
+  it('should handle all currency codes', () => {
+    const currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'THB', 'JPY', 'CNY', 'MMK'];
+    currencies.forEach(currency => {
+      settings.update(s => ({ ...s, currency }));
+      expect(get(settings).currency).toBe(currency);
+    });
+  });
+
+  it('should handle timezone changes', () => {
+    const timezones = [
+      'Asia/Bangkok',
+      'America/New_York',
+      'Europe/London',
+      'Australia/Sydney'
+    ];
+    timezones.forEach(timezone => {
+      settings.update(s => ({ ...s, timezone }));
+      expect(get(settings).timezone).toBe(timezone);
+    });
+  });
+});
+
+describe('formatCurrency Edge Cases', () => {
+  it('should handle very small decimal values', () => {
+    expect(formatCurrency(0.001, 'USD')).toBe('$0.00');
+    expect(formatCurrency(0.009, 'USD')).toBe('$0.01');
+  });
+
+  it('should handle very large numbers', () => {
+    expect(formatCurrency(9999999999.99, 'USD')).toBe('$9,999,999,999.99');
+  });
+
+  it('should handle number.MAX_VALUE', () => {
+    const result = formatCurrency(Number.MAX_VALUE, 'USD');
+    expect(result).toContain('$');
+  });
+
+  it('should handle NaN input gracefully', () => {
+    const result = formatCurrency(NaN, 'USD');
+    expect(result).toBe('NaN');
+  });
+
+  it('should handle Infinity input', () => {
+    const result = formatCurrency(Infinity, 'USD');
+    expect(result).toBe('Infinity');
+  });
+
+  it('should handle negative infinity', () => {
+    const result = formatCurrency(-Infinity, 'USD');
+    expect(result).toBe('-Infinity');
+  });
+
+  it('should format MMK with proper grouping', () => {
+    expect(formatCurrency(100, 'MMK')).toBe('MMK 100');
+    expect(formatCurrency(1000, 'MMK')).toBe('MMK 1,000');
+    expect(formatCurrency(10000, 'MMK')).toBe('MMK 10,000');
+    expect(formatCurrency(100000, 'MMK')).toBe('MMK 100,000');
+    expect(formatCurrency(1000000, 'MMK')).toBe('MMK 1,000,000');
+  });
+
+  it('should format negative MMK values', () => {
+    expect(formatCurrency(-1000, 'MMK')).toBe('MMK -1,000');
+  });
+
+  it('should handle unknown currency with fallback', () => {
+    expect(formatCurrency(100, 'INVALID')).toBe('INVALID100.00');
+    expect(formatCurrency(99.99, 'XYZ')).toBe('XYZ99.99');
+  });
+
+  it('should handle case-sensitive currency codes', () => {
+    expect(currencySymbol('usd')).toBe('usd');
+    expect(currencySymbol('Usd')).toBe('Usd');
+    expect(currencySymbol('USD')).toBe('$');
+  });
 });

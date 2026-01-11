@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ url }) => {
       .from(saleItems)
       .innerJoin(items, eq(saleItems.itemId, items.id))
       .innerJoin(sales, eq(saleItems.saleId, sales.id))
-      .where(dateFilter ? eq(sales.id, 0).and(dateFilter as any) : undefined)
+      .where(dateFilter)
       .groupBy(saleItems.itemId)
       .orderBy(desc(sum(saleItems.quantity)))
       .limit(limit)

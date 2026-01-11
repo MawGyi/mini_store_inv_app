@@ -673,5 +673,364 @@ describe('Validators', () => {
       const result = ItemSchema.safeParse(specialCodeItem);
       expect(result.success).toBe(true);
     });
+
+    it('should accept null expiryDate', () => {
+      const itemWithNullExpiry = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: 10.99,
+        stockQuantity: 50,
+        lowStockThreshold: 10,
+        expiryDate: null
+      };
+      const result = ItemSchema.safeParse(itemWithNullExpiry);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.expiryDate).toBeNull();
+      }
+    });
+
+    it('should reject negative price', () => {
+      const invalidItem = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: -10,
+        stockQuantity: 50,
+        lowStockThreshold: 10
+      };
+      const result = ItemSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        expect(errors.some(e => e.field === 'price')).toBe(true);
+      }
+    });
+
+    it('should reject negative stockQuantity', () => {
+      const invalidItem = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: 10.99,
+        stockQuantity: -5,
+        lowStockThreshold: 10
+      };
+      const result = ItemSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        expect(errors.some(e => e.field === 'stockQuantity')).toBe(true);
+      }
+    });
+
+    it('should accept 0 as lowStockThreshold', () => {
+      const itemWithZeroThreshold = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: 10.99,
+        stockQuantity: 50,
+        lowStockThreshold: 0
+      };
+      const result = ItemSchema.safeParse(itemWithZeroThreshold);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.lowStockThreshold).toBe(0);
+      }
+    });
+
+    it('should handle very long name (255 characters)', () => {
+      const longNameItem = {
+        name: 'a'.repeat(255),
+        itemCode: 'TP001',
+        price: 10.99,
+        stockQuantity: 50
+      };
+      const result = ItemSchema.safeParse(longNameItem);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject name exceeding 255 characters', () => {
+      const invalidItem = {
+        name: 'a'.repeat(256),
+        itemCode: 'TP001',
+        price: 10.99,
+        stockQuantity: 50
+      };
+      const result = ItemSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        expect(errors.some(e => e.field === 'name')).toBe(true);
+      }
+    });
+
+    it('should accept decimal prices', () => {
+      const decimalPriceItem = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: 0.01,
+        stockQuantity: 50
+      };
+      const result = ItemSchema.safeParse(decimalPriceItem);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.price).toBe(0.01);
+      }
+    });
+
+    it('should accept very large prices', () => {
+      const largePriceItem = {
+        name: 'Test Product',
+        itemCode: 'TP001',
+        price: 9999999.99,
+        stockQuantity: 50
+      };
+      const result = ItemSchema.safeParse(largePriceItem);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.price).toBe(9999999.99);
+      }
+    });
+  });
+
+  describe('SaleSchema', () => {
+    it('should validate a valid sale with single item', () => {
+      const validSale = {
+        items: [
+          { itemId: 1, quantity: 5, unitPrice: 10.99, totalPrice: 54.95 }
+        ],
+        paymentMethod: 'cash',
+        customerName: 'John Doe',
+        saleDate: new Date().toISOString()
+      };
+      const result = SaleSchema.safeParse(validSale);
+      expect(result.success).toBe(true);
+    });
+
+    it('should validate a valid sale with multiple items', () => {
+      const validSale = {
+        items: [
+          { itemId: 1, quantity: 5, unitPrice: 10.99, totalPrice: 54.95 },
+          { itemId: 2, quantity: 3, unitPrice: 25.50, totalPrice: 76.50 }
+        ],
+        paymentMethod: 'credit',
+        customerName: 'Jane Doe',
+        saleDate: new Date().toISOString()
+      };
+      const result = SaleSchema.safeParse(validSale);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject empty items array', () => {
+      const invalidSale = {
+        items: [],
+        paymentMethod: 'cash',
+        customerName: 'John Doe'
+      };
+      const result = SaleSchema.safeParse(invalidSale);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject items with quantity 0', () => {
+      const invalidSale = {
+        items: [
+          { itemId: 1, quantity: 0, unitPrice: 10.99, totalPrice: 0 }
+        ],
+        paymentMethod: 'cash'
+      };
+      const result = SaleSchema.safeParse(invalidSale);
+      expect(result.success).toBe(false);
+    });
+
+    it('should accept all payment methods', () => {
+      const paymentMethods = ['cash', 'credit', 'mobile_payment'];
+      
+      paymentMethods.forEach(paymentMethod => {
+        const sale = {
+          items: [{ itemId: 1, quantity: 5, unitPrice: 10, totalPrice: 50 }],
+          paymentMethod
+        };
+        const result = SaleSchema.safeParse(sale);
+        expect(result.success).toBe(true);
+      });
+    });
+
+    it('should handle missing customerName', () => {
+      const saleWithoutCustomer = {
+        items: [{ itemId: 1, quantity: 5, unitPrice: 10, totalPrice: 50 }],
+        paymentMethod: 'cash'
+      };
+      const result = SaleSchema.safeParse(saleWithoutCustomer);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject negative quantity', () => {
+      const invalidSale = {
+        items: [
+          { itemId: 1, quantity: -5, unitPrice: 10.99, totalPrice: -54.95 }
+        ],
+        paymentMethod: 'cash'
+      };
+      const result = SaleSchema.safeParse(invalidSale);
+      expect(result.success).toBe(false);
+    });
+
+    it('should validate totalPrice matches quantity * unitPrice', () => {
+      const validSale = {
+        items: [
+          { itemId: 1, quantity: 3, unitPrice: 10, totalPrice: 30 }
+        ],
+        paymentMethod: 'cash'
+      };
+      const result = SaleSchema.safeParse(validSale);
+      expect(result.success).toBe(true);
+    });
+
+    it('should handle ISO date format', () => {
+      const saleWithDate = {
+        items: [{ itemId: 1, quantity: 5, unitPrice: 10, totalPrice: 50 }],
+        paymentMethod: 'cash',
+        saleDate: '2024-01-15T10:30:00.000Z'
+      };
+      const result = SaleSchema.safeParse(saleWithDate);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('SaleItemInputSchema', () => {
+    it('should validate a valid sale item', () => {
+      const validItem = {
+        itemId: 1,
+        quantity: 10,
+        unitPrice: 25.50,
+        totalPrice: 255.00
+      };
+      const result = SaleItemInputSchema.safeParse(validItem);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject negative quantity', () => {
+      const invalidItem = {
+        itemId: 1,
+        quantity: -1,
+        unitPrice: 25.50,
+        totalPrice: -25.50
+      };
+      const result = SaleItemInputSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject zero unit price', () => {
+      const invalidItem = {
+        itemId: 1,
+        quantity: 10,
+        unitPrice: 0,
+        totalPrice: 0
+      };
+      const result = SaleItemInputSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject missing itemId', () => {
+      const invalidItem = {
+        quantity: 10,
+        unitPrice: 25.50,
+        totalPrice: 255.00
+      };
+      const result = SaleItemInputSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('ItemUpdateSchema', () => {
+    it('should validate partial item update', () => {
+      const partialUpdate = {
+        name: 'Updated Name'
+      };
+      const result = ItemUpdateSchema.safeParse(partialUpdate);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.name).toBe('Updated Name');
+      }
+    });
+
+    it('should allow updating only price', () => {
+      const partialUpdate = {
+        price: 19.99
+      };
+      const result = ItemUpdateSchema.safeParse(partialUpdate);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.price).toBe(19.99);
+      }
+    });
+
+    it('should allow updating only stockQuantity', () => {
+      const partialUpdate = {
+        stockQuantity: 100
+      };
+      const result = ItemUpdateSchema.safeParse(partialUpdate);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.stockQuantity).toBe(100);
+      }
+    });
+
+    it('should reject negative price in update', () => {
+      const invalidUpdate = {
+        price: -5
+      };
+      const result = ItemUpdateSchema.safeParse(invalidUpdate);
+      expect(result.success).toBe(false);
+    });
+
+    it('should reject negative stockQuantity in update', () => {
+      const invalidUpdate = {
+        stockQuantity: -10
+      };
+      const result = ItemUpdateSchema.safeParse(invalidUpdate);
+      expect(result.success).toBe(false);
+    });
+
+    it('should allow empty update object', () => {
+      const emptyUpdate = {};
+      const result = ItemUpdateSchema.safeParse(emptyUpdate);
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe('formatZodError', () => {
+    it('should format multiple errors correctly', () => {
+      const invalidItem = {
+        name: '',
+        itemCode: '',
+        price: -5,
+        stockQuantity: -10
+      };
+      const result = ItemSchema.safeParse(invalidItem);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        expect(errors.length).toBeGreaterThan(1);
+        expect(errors.some(e => e.field === 'name')).toBe(true);
+        expect(errors.some(e => e.field === 'itemCode')).toBe(true);
+        expect(errors.some(e => e.field === 'price')).toBe(true);
+        expect(errors.some(e => e.field === 'stockQuantity')).toBe(true);
+      }
+    });
+
+    it('should handle nested object errors', () => {
+      const invalidSale = {
+        items: [
+          { itemId: 1, quantity: 0, unitPrice: 10, totalPrice: 0 }
+        ],
+        paymentMethod: 'invalid'
+      };
+      const result = SaleSchema.safeParse(invalidSale);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = formatZodError(result.error);
+        expect(errors.length).toBeGreaterThan(0);
+      }
+    });
   });
 });

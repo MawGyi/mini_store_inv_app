@@ -4,7 +4,15 @@ import { db } from '$lib/server/db'
 import { sales, saleItems } from '$lib/server/db'
 import { desc, eq } from 'drizzle-orm'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export const GET: RequestHandler = async ({ url }) => {
+  if (!isDbAvailable()) {
+    return json({ error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
@@ -26,14 +34,14 @@ export const GET: RequestHandler = async ({ url }) => {
     if (startDate && endDate) {
       const start = new Date(startDate).getTime()
       const end = new Date(endDate).getTime() + 86400000
-      filteredSales = filteredSales.filter(s => {
+      filteredSales = filteredSales.filter((s: { saleDate: Date | null }) => {
         const saleTime = s.saleDate ? s.saleDate.getTime() : 0
         return saleTime >= start && saleTime < end
       })
     }
 
     if (paymentMethod) {
-      filteredSales = filteredSales.filter(s => s.paymentMethod === paymentMethod)
+      filteredSales = filteredSales.filter((s: { paymentMethod: string }) => s.paymentMethod === paymentMethod)
     }
 
     let totalAmount = 0
@@ -43,7 +51,7 @@ export const GET: RequestHandler = async ({ url }) => {
     for (const sale of filteredSales) {
       totalAmount += sale.totalAmount
       const saleItemsData = await db.select().from(saleItems).where(eq(saleItems.saleId, sale.id))
-      itemsSold += saleItemsData.reduce((sum, si) => sum + si.quantity, 0)
+      itemsSold += saleItemsData.reduce((sum: number, si: { quantity: number }) => sum + si.quantity, 0)
     }
 
     const byPaymentMethod: Record<string, number> = {}

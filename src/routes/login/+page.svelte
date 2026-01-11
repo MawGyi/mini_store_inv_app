@@ -109,10 +109,33 @@
     const pupils = document.querySelectorAll('.pupil');
     pupils.forEach(p => {
       if (p instanceof HTMLElement) {
-        p.style.height = focus ? '1px' : '6px';
+        p.style.transform = focus ? 'translateY(3px)' : 'translateY(0)';
       }
     });
   }
+
+  function updateEyesForPasswordVisibility() {
+    const pupils = document.querySelectorAll('.pupil');
+    const eyelids = document.querySelectorAll('.eyelid');
+    pupils.forEach(p => {
+      if (p instanceof HTMLElement) {
+        if (showPassword) {
+          p.style.opacity = '1';
+          p.style.transform = 'translateY(0)';
+        } else {
+          p.style.opacity = '0';
+          p.style.transform = 'translateY(3px)';
+        }
+      }
+    });
+    eyelids.forEach(e => {
+      if (e instanceof HTMLElement) {
+        e.style.height = showPassword ? '0%' : '100%';
+      }
+    });
+  }
+
+  $: showPassword, updateEyesForPasswordVisibility();
 </script>
 
 <svelte:head>
@@ -129,22 +152,40 @@
         <!-- Purple Character -->
         <div class="absolute bottom-10 left-10 w-32 h-52 bg-[#7C3AED] rounded-t-[30px] float shadow-md" style="animation-delay: 0.2s;">
           <div class="absolute top-10 left-10 flex gap-4">
-            <div class="eye-white"><div class="pupil"></div></div>
-            <div class="eye-white"><div class="pupil"></div></div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
           </div>
         </div>
         <!-- Orange Character -->
         <div class="absolute bottom-0 left-[-20px] w-44 h-32 bg-[#FB923C] rounded-t-full float shadow-md">
           <div class="absolute top-10 left-16 flex gap-4">
-            <div class="eye-white"><div class="pupil"></div></div>
-            <div class="eye-white"><div class="pupil"></div></div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
           </div>
         </div>
         <!-- Yellow Character -->
         <div class="absolute bottom-0 right-2 w-24 h-44 bg-[#FACC15] rounded-t-full float shadow-md" style="animation-delay: 0.5s;">
           <div class="absolute top-12 left-6 flex gap-3">
-            <div class="eye-white"><div class="pupil"></div></div>
-            <div class="eye-white"><div class="pupil"></div></div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
+            <div class="eye-white">
+              <div class="pupil"></div>
+              <div class="eyelid"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -348,17 +389,6 @@
   }
 
   /* Eye Styles */
-  .eye-white {
-    width: 14px;
-    height: 14px;
-    background: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
   .pupil {
     width: 6px;
     height: 6px;
@@ -369,6 +399,31 @@
     top: 50%;
     margin-left: -3px;
     margin-top: -3px;
-    transition: transform 0.05s ease-out, height 0.2s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    z-index: 1;
+  }
+
+  .eyelid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: inherit;
+    border-radius: 50%;
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+  }
+
+  .eye-white {
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
   }
 </style>

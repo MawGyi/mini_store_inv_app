@@ -89,7 +89,7 @@ export const formatCurrency = (value: number, currency: string = 'USD'): string 
       currency: 'MMK',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0
-    }).format(value).replace('MMK', 'MMK ')
+    }).format(value)
   }
   try {
     return new Intl.NumberFormat('en-US', {

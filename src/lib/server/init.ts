@@ -3,11 +3,16 @@ import { db, initializeDatabase, items } from '$lib/server/db'
 import { seedDatabase } from '$lib/server/db/seed'
 
 async function init() {
+  if (!db) {
+    console.log('Database not available - running in demo mode')
+    return
+  }
+
   try {
     console.log('Checking database connection...')
     await initializeDatabase()
     
-    const count = await db.select({ count: sql`count(*)` }).from(items).then(r => r[0]?.count || 0)
+    const count = await db.select({ count: sql`count(*)` }).from(items).then((r: any) => r[0]?.count || 0)
     
     if (count === 0) {
       console.log('Seeding database with initial data...')

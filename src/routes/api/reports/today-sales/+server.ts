@@ -4,7 +4,15 @@ import { db } from '$lib/server/db'
 import { sales } from '$lib/server/db'
 import { gte, lte, sql, sum, count } from 'drizzle-orm'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export const GET: RequestHandler = async ({ url }) => {
+  if (!isDbAvailable()) {
+    return json({ success: false, error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)

@@ -4,7 +4,15 @@ import { db } from '$lib/server/db'
 import { items } from '$lib/server/db'
 import { eq, desc, sql, count, sum } from 'drizzle-orm'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export const GET: RequestHandler = async ({ url }) => {
+  if (!isDbAvailable()) {
+    return json({ error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const category = url.searchParams.get('category')
     const status = url.searchParams.get('status')

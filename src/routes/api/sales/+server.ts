@@ -12,7 +12,18 @@ function generateInvoiceNumber(): string {
   return `INV-${timestamp}-${random}`
 }
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export async function GET({ url }: { url: URL }) {
+  if (!isDbAvailable()) {
+    return json({ 
+      success: false, 
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    }, { status: 503 })
+  }
+  
   try {
     const page = parseInt(url.searchParams.get('page') || '1')
     const limit = parseInt(url.searchParams.get('limit') || '10')
@@ -47,6 +58,13 @@ export async function GET({ url }: { url: URL }) {
 }
 
 export async function POST({ request }: { request: Request }) {
+  if (!isDbAvailable()) {
+    return json({ 
+      success: false, 
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    }, { status: 503 })
+  }
+  
   try {
     const body: unknown = await request.json()
     
@@ -95,7 +113,7 @@ export async function POST({ request }: { request: Request }) {
       }>
     }
 
-    const result = await db.transaction(async (tx): Promise<SaleResult> => {
+    const result = await db.transaction(async (tx: any): Promise<SaleResult> => {
       const saleItemsData: SaleItemData[] = []
       let totalAmount = 0
 

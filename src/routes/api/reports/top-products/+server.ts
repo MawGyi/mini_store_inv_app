@@ -4,7 +4,15 @@ import { db } from '$lib/server/db'
 import { items, saleItems, sales } from '$lib/server/db'
 import { eq, desc, sum, gte, sql } from 'drizzle-orm'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export const GET: RequestHandler = async ({ url }) => {
+  if (!isDbAvailable()) {
+    return json({ error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const startDate = url.searchParams.get('startDate')
     const endDate = url.searchParams.get('endDate')
@@ -35,12 +43,12 @@ export const GET: RequestHandler = async ({ url }) => {
     let filteredProducts = topProducts
     if (dateFilter) {
       const allSales = await db.select({ id: sales.id }).from(sales).where(sql`${sales.saleDate} >= ${startDate} AND ${sales.saleDate} < ${endDate}`)
-      const saleIds = new Set(allSales.map(s => s.id))
-      filteredProducts = topProducts.filter(p => p.itemId !== undefined)
+      const saleIds = new Set(allSales.map((s: { id: number }) => s.id))
+      filteredProducts = topProducts.filter((p: { itemId: number | undefined }) => p.itemId !== undefined)
     }
 
-    const totalQuantity = filteredProducts.reduce((sum, p) => sum + (p.quantity || 0), 0)
-    const totalRevenue = filteredProducts.reduce((sum, p) => sum + (p.revenue || 0), 0)
+    const totalQuantity = filteredProducts.reduce((sum: number, p: { quantity: number | null }) => sum + (p.quantity || 0), 0)
+    const totalRevenue = filteredProducts.reduce((sum: number, p: { revenue: number | null }) => sum + (p.revenue || 0), 0)
 
     return json({
       summary: {
@@ -48,7 +56,7 @@ export const GET: RequestHandler = async ({ url }) => {
         totalRevenue: Math.round(totalRevenue * 100) / 100,
         productCount: filteredProducts.length
       },
-      products: filteredProducts.map(p => ({
+      products: filteredProducts.map((p: { itemName: string | null; itemCode: string | null; quantity: number | null; revenue: number | null }) => ({
         name: p.itemName,
         itemCode: p.itemCode,
         quantity: p.quantity || 0,

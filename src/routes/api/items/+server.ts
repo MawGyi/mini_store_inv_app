@@ -6,7 +6,18 @@ import { json } from '@sveltejs/kit'
 import { ItemSchema, ItemUpdateSchema, formatZodError } from '$lib/validators'
 import type { ItemInput, ItemUpdateInput } from '$lib/validators'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export async function GET({ url }: { url: URL }) {
+  if (!isDbAvailable()) {
+    return json({ 
+      success: false, 
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    }, { status: 503 })
+  }
+  
   try {
     const page = parseInt(url.searchParams.get('page') || '1')
     const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 100)
@@ -68,6 +79,13 @@ export async function GET({ url }: { url: URL }) {
 }
 
 export async function POST({ request }: { request: Request }) {
+  if (!isDbAvailable()) {
+    return json({ 
+      success: false, 
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    }, { status: 503 })
+  }
+  
   try {
     const body: unknown = await request.json()
     

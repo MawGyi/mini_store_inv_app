@@ -4,7 +4,15 @@ import { db } from '$lib/server/db'
 import { sales, saleItems } from '$lib/server/db'
 import { gte, asc, sql, sum, count, and, lte } from 'drizzle-orm'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export const GET: RequestHandler = async ({ url }) => {
+  if (!isDbAvailable()) {
+    return json({ error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const days = parseInt(url.searchParams.get('days') || '30')
     const startDateParam = url.searchParams.get('startDate')
@@ -29,8 +37,8 @@ export const GET: RequestHandler = async ({ url }) => {
       .groupBy(sql`DATE_TRUNC('day', ${sales.saleDate})::date`)
       .orderBy(asc(sql`DATE_TRUNC('day', ${sales.saleDate})::date`))
 
-    const totalRevenue = dailyData.reduce((sum, d) => sum + (d.totalSales || 0), 0)
-    const totalTransactions = dailyData.reduce((sum, d) => sum + (d.transactionCount || 0), 0)
+    const totalRevenue = dailyData.reduce((sum: number, d: { totalSales: number | null; transactionCount: number | null }) => sum + (d.totalSales || 0), 0)
+    const totalTransactions = dailyData.reduce((sum: number, d: { totalSales: number | null; transactionCount: number | null }) => sum + (d.transactionCount || 0), 0)
     const avgDailySales = dailyData.length > 0 ? totalRevenue / dailyData.length : 0
     const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0
 
@@ -41,7 +49,7 @@ export const GET: RequestHandler = async ({ url }) => {
         avgDailySales: Math.round(avgDailySales * 100) / 100,
         avgTransactionValue: Math.round(avgTransactionValue * 100) / 100
       },
-      daily: dailyData.map(d => ({
+      daily: dailyData.map((d: { date: string | null; totalSales: number | null; transactionCount: number | null }) => ({
         date: d.date,
         totalSales: d.totalSales || 0,
         transactionCount: d.transactionCount || 0,

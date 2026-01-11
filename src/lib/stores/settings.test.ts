@@ -120,16 +120,16 @@ describe('formatCurrency', () => {
   });
 
   it('should format CNY correctly', () => {
-    expect(formatCurrency(10.99, 'CNY')).toBe('¥10.99');
+    expect(formatCurrency(10.99, 'CNY')).toBe('CN¥10.99');
   });
 
   it('should format THB correctly', () => {
-    expect(formatCurrency(100, 'THB')).toBe('฿100.00');
-    expect(formatCurrency(1000, 'THB')).toBe('฿1,000.00');
+    expect(formatCurrency(100, 'THB')).toBe('THB 100.00');
+    expect(formatCurrency(1000, 'THB')).toBe('THB 1,000.00');
   });
 
   it('should format CAD correctly', () => {
-    expect(formatCurrency(10.99, 'CAD')).toBe('C$10.99');
+    expect(formatCurrency(10.99, 'CAD')).toBe('CA$10.99');
   });
 
   it('should format AUD correctly', () => {

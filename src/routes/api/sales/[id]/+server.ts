@@ -4,7 +4,15 @@ import { eq } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 import type { SaleWithItems } from '$lib/types'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export async function GET({ params }: { params: { id: string } }) {
+  if (!isDbAvailable()) {
+    return json({ success: false, error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const id = parseInt(params.id)
     if (isNaN(id)) {
@@ -29,7 +37,7 @@ export async function GET({ params }: { params: { id: string } }) {
     .from(saleItems)
     .innerJoin(items, eq(saleItems.itemId, items.id))
     .where(eq(saleItems.saleId, id))
-    .then(items => items.map(item => ({
+    .then((items: Array<{ id: number; saleId: number | null; itemId: number | null; quantity: number; unitPrice: number; totalPrice: number; itemName: string }>) => items.map((item: { id: number; saleId: number | null; itemId: number | null; quantity: number; unitPrice: number; totalPrice: number; itemName: string }) => ({
       ...item,
       saleId: item.saleId || id,
       itemId: item.itemId || 0

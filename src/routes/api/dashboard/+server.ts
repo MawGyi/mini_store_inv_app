@@ -16,8 +16,42 @@ interface DashboardAlert {
   daysUntilExpiry?: number
 }
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export async function GET({ url }: { url: URL }) {
   const action = url.searchParams.get('action') || 'overview'
+
+  if (!isDbAvailable()) {
+    return json({
+      success: true,
+      data: action === 'alerts' ? [] : {
+        overview: {
+          totalSales: 0,
+          totalTransactions: 0,
+          totalItems: 0,
+          lowStockItems: 0,
+          todaySales: 0,
+          weekSales: 0,
+          monthSales: 0
+        },
+        inventory: {
+          totalItems: 0,
+          totalCategories: 0,
+          lowStockItems: 0,
+          outOfStockItems: 0,
+          totalValue: 0
+        },
+        sales: {
+          today: { count: 0, totalAmount: 0 },
+          thisMonth: { count: 0, totalAmount: 0 }
+        },
+        recentSales: [],
+        todayTransactionCount: 0
+      }
+    })
+  }
 
   try {
     switch (action) {
@@ -172,7 +206,7 @@ async function handleAlerts() {
   .innerJoin(sales, eq(saleItems.saleId, sales.id))
   .where(gte(sales.saleDate, thirtyDaysAgo))
   
-  const soldItemIds = new Set(recentSales.map(s => s.itemId))
+  const soldItemIds = new Set(recentSales.map((s: any) => s.itemId))
   
   for (const item of allItems) {
     if (item.stockQuantity === 0) {

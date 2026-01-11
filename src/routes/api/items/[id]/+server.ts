@@ -5,7 +5,15 @@ import { json } from '@sveltejs/kit'
 import { ItemUpdateSchema, formatZodError } from '$lib/validators'
 import type { ItemUpdateInput } from '$lib/validators'
 
+function isDbAvailable() {
+  return db !== null
+}
+
 export async function GET({ params }: { params: { id: string } }) {
+  if (!isDbAvailable()) {
+    return json({ success: false, error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const id = parseInt(params.id)
     if (isNaN(id)) {
@@ -26,6 +34,10 @@ export async function GET({ params }: { params: { id: string } }) {
 }
 
 export async function PUT({ request, params }: { request: Request; params: { id: string } }) {
+  if (!isDbAvailable()) {
+    return json({ success: false, error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const id = parseInt(params.id)
     if (isNaN(id)) {
@@ -96,6 +108,10 @@ export async function PUT({ request, params }: { request: Request; params: { id:
 }
 
 export async function DELETE({ params }: { params: { id: string } }) {
+  if (!isDbAvailable()) {
+    return json({ success: false, error: 'Database not available' }, { status: 503 })
+  }
+
   try {
     const id = parseInt(params.id)
     if (isNaN(id)) {

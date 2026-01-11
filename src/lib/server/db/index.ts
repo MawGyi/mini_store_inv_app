@@ -3,6 +3,19 @@ import { drizzle } from 'drizzle-orm/vercel-postgres'
 import { serial, text, integer, real, timestamp, pgTable } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
+const hasConnectionString = !!process.env.POSTGRES_URL || !!process.env.VERCEL_URL
+
+let dbInstance: any
+
+if (hasConnectionString) {
+  dbInstance = drizzle(sqlClient)
+} else {
+  console.log('No database connection string found - running in demo mode')
+  dbInstance = null
+}
+
+export const db = dbInstance
+
 export const items = pgTable('items', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
@@ -42,11 +55,14 @@ export const categories = pgTable('categories', {
   createdAt: timestamp('created_at').notNull()
 })
 
-export const db = drizzle(sqlClient)
-
 let initialized = false
 
 export async function initializeDatabase() {
+  if (!db) {
+    console.log('Database not available - skipping initialization')
+    return
+  }
+
   if (initialized) return
   initialized = true
   

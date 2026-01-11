@@ -1,22 +1,22 @@
 import { initializeDatabase } from '$lib/server/db'
 import type { Handle } from '@sveltejs/kit'
 
-let initialized = false
+let dbInitialized = false
 
-async function initServer() {
-  if (initialized) return
-  initialized = true
+async function ensureDbInitialized() {
+  if (dbInitialized) return true
+  dbInitialized = true
   
   try {
     console.log('Initializing database...')
     await initializeDatabase()
-    console.log('Server initialization complete')
+    console.log('Database initialization complete')
+    return true
   } catch (error) {
-    console.error('Error initializing server:', error)
+    console.error('Database initialization error:', error)
+    return false
   }
 }
-
-initServer()
 
 function getSessionFromCookies(cookies: Record<string, string>): { valid: boolean; user?: { email: string; role: string } } {
   const sessionCookie = cookies['session']
@@ -49,6 +49,8 @@ const protectedPaths = ['/api/items', '/api/sales', '/api/dashboard']
 const adminPaths = ['/api/items', '/api/sales']
 
 export const handle: Handle = async ({ event, resolve }) => {
+  await ensureDbInitialized()
+  
   const response = await resolve(event)
   
   response.headers.set('X-Content-Type-Options', 'nosniff')

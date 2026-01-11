@@ -1,5 +1,4 @@
-import { db } from './index'
-import { items, categories, sales, saleItems } from './schema'
+import { db, items, categories, sales, saleItems } from './index'
 import { sql } from 'drizzle-orm'
 
 function generateInvoiceNumber() {

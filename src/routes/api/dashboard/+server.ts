@@ -75,12 +75,15 @@ export async function GET({ url }: { url: URL }) {
 async function handleOverview() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const todayMs = today.getTime()
   
   const weekAgo = new Date(today)
   weekAgo.setDate(weekAgo.getDate() - 7)
+  const weekAgoMs = weekAgo.getTime()
   
   const monthAgo = new Date(today)
   monthAgo.setMonth(monthAgo.getMonth() - 1)
+  const monthAgoMs = monthAgo.getTime()
   
   const [totalSalesResult] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
@@ -111,22 +114,22 @@ async function handleOverview() {
   const [todaySales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
-    .where(gte(sales.saleDate, today))
+    .where(gte(sales.saleDate, todayMs))
   
   const [todayTransactionCount] = await db.select({
     count: count()
   }).from(sales)
-    .where(gte(sales.saleDate, today))
+    .where(gte(sales.saleDate, todayMs))
   
   const [weekSales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
-    .where(gte(sales.saleDate, weekAgo))
+    .where(gte(sales.saleDate, weekAgoMs))
   
   const [monthSales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
-    .where(gte(sales.saleDate, monthAgo))
+    .where(gte(sales.saleDate, monthAgoMs))
   
   const [recentSales] = await db.select({
     id: sales.id,
@@ -191,12 +194,15 @@ async function handleAlerts() {
   
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+  const thirtyDaysAgoMs = thirtyDaysAgo.getTime()
   
   const thirtyDaysFromNow = new Date()
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+  const thirtyDaysFromNowMs = thirtyDaysFromNow.getTime()
   
   const today = new Date()
   today.setHours(0, 0, 0, 0)
+  const todayMs = today.getTime()
   
   const recentSales = await db.select({
     saleId: saleItems.saleId,
@@ -204,7 +210,7 @@ async function handleAlerts() {
   })
   .from(saleItems)
   .innerJoin(sales, eq(saleItems.saleId, sales.id))
-  .where(gte(sales.saleDate, thirtyDaysAgo))
+  .where(gte(sales.saleDate, thirtyDaysAgoMs))
   
   const soldItemIds = new Set(recentSales.map((s: any) => s.itemId))
   

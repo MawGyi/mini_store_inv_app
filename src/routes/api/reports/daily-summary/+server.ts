@@ -24,21 +24,41 @@ export const GET: RequestHandler = async ({ url }) => {
       ? new Date(startDateParam)
       : new Date(now.getTime() - (days * 24 * 60 * 60 * 1000))
 
-    const dailyData = await db.select({
-      date: sql<string>`DATE_TRUNC('day', ${sales.saleDate})::date`.as('date'),
-      totalSales: sum(sales.totalAmount).mapWith(Number),
-      transactionCount: count()
+    const startMs = startDate.getTime()
+    const endMs = endDate.getTime()
+
+    const allSales = await db.select({
+      saleDate: sales.saleDate,
+      totalAmount: sales.totalAmount
     })
       .from(sales)
-      .where(and(
-        gte(sales.saleDate, startDate),
-        lte(sales.saleDate, endDate)
-      ))
-      .groupBy(sql`DATE_TRUNC('day', ${sales.saleDate})::date`)
-      .orderBy(asc(sql`DATE_TRUNC('day', ${sales.saleDate})::date`))
+      .where(sql`${sales.saleDate} >= ${startMs} AND ${sales.saleDate} <= ${endMs}`)
 
-    const totalRevenue = dailyData.reduce((sum: number, d: { totalSales: number | null; transactionCount: number | null }) => sum + (d.totalSales || 0), 0)
-    const totalTransactions = dailyData.reduce((sum: number, d: { totalSales: number | null; transactionCount: number | null }) => sum + (d.transactionCount || 0), 0)
+    const salesByDay: Record<string, { totalSales: number; transactionCount: number }> = {}
+    
+    for (const sale of allSales) {
+      const saleDate = sale.saleDate as number
+      const date = new Date(saleDate)
+      const dayKey = date.toISOString().split('T')[0]
+      
+      if (!salesByDay[dayKey]) {
+        salesByDay[dayKey] = { totalSales: 0, transactionCount: 0 }
+      }
+      salesByDay[dayKey].totalSales += sale.totalAmount || 0
+      salesByDay[dayKey].transactionCount += 1
+    }
+
+    const dailyData = Object.entries(salesByDay)
+      .map(([date, data]) => ({
+        date,
+        totalSales: Math.round(data.totalSales * 100) / 100,
+        transactionCount: data.transactionCount,
+        avgSaleValue: Math.round((data.totalSales / data.transactionCount) * 100) / 100
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    const totalRevenue = dailyData.reduce((sum, d) => sum + d.totalSales, 0)
+    const totalTransactions = dailyData.reduce((sum, d) => sum + d.transactionCount, 0)
     const avgDailySales = dailyData.length > 0 ? totalRevenue / dailyData.length : 0
     const avgTransactionValue = totalTransactions > 0 ? totalRevenue / totalTransactions : 0
 
@@ -49,12 +69,7 @@ export const GET: RequestHandler = async ({ url }) => {
         avgDailySales: Math.round(avgDailySales * 100) / 100,
         avgTransactionValue: Math.round(avgTransactionValue * 100) / 100
       },
-      daily: dailyData.map((d: { date: string | null; totalSales: number | null; transactionCount: number | null }) => ({
-        date: d.date,
-        totalSales: d.totalSales || 0,
-        transactionCount: d.transactionCount || 0,
-        avgSaleValue: d.transactionCount ? Math.round(((d.totalSales || 0) / d.transactionCount) * 100) / 100 : 0
-      }))
+      daily: dailyData
     })
   } catch (error) {
     console.error('Error generating daily summary report:', error)

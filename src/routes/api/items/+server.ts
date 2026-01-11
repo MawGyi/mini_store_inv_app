@@ -126,8 +126,8 @@ export async function POST({ request }: { request: Request }) {
       lowStockThreshold: data.lowStockThreshold,
       category: data.category ?? null,
       expiryDate: data.expiryDate ?? null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     }).returning()
     
     return json({ success: true, data: resultData[0] }, { status: 201 })

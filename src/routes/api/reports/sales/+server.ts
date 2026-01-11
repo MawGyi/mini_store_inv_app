@@ -34,8 +34,8 @@ export const GET: RequestHandler = async ({ url }) => {
     if (startDate && endDate) {
       const start = new Date(startDate).getTime()
       const end = new Date(endDate).getTime() + 86400000
-      filteredSales = filteredSales.filter((s: { saleDate: Date | null }) => {
-        const saleTime = s.saleDate ? s.saleDate.getTime() : 0
+      filteredSales = filteredSales.filter((s: { saleDate: number | null }) => {
+        const saleTime = s.saleDate || 0
         return saleTime >= start && saleTime < end
       })
     }

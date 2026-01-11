@@ -16,16 +16,18 @@ export const GET: RequestHandler = async ({ url }) => {
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    const todayMs = today.getTime()
 
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowMs = tomorrow.getTime()
 
     const todaySalesData = await db.select({
       totalSales: sum(sales.totalAmount).mapWith(Number),
       transactionCount: count()
     })
       .from(sales)
-      .where(sql`${sales.saleDate} >= ${today} AND ${sales.saleDate} < ${tomorrow}`)
+      .where(sql`${sales.saleDate} >= ${todayMs} AND ${sales.saleDate} < ${tomorrowMs}`)
 
     const result = todaySalesData[0]
 

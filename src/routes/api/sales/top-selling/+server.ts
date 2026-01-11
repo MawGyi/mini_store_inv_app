@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db'
-import { items, saleItems } from '$lib/server/db'
-import { eq, desc, sql, sum } from 'drizzle-orm'
+import { items, saleItems, sales } from '$lib/server/db'
+import { sql } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 
 function isDbAvailable() {
@@ -15,17 +15,39 @@ export async function GET({ url }: { url: URL }) {
   const limit = parseInt(url.searchParams.get('limit') || '5')
   
   try {
-    const topSelling = await db.select({
+    const allSaleItems = await db.select({
       itemId: saleItems.itemId,
-      itemName: items.name,
-      totalQuantity: sum(saleItems.quantity).mapWith(Number),
-      totalRevenue: sum(saleItems.totalPrice).mapWith(Number)
+      quantity: saleItems.quantity,
+      totalPrice: saleItems.totalPrice
     })
     .from(saleItems)
-    .innerJoin(items, eq(saleItems.itemId, items.id))
-    .groupBy(sql`${saleItems.itemId}, ${items.name}`)
-    .orderBy(desc(sum(saleItems.quantity)))
-    .limit(limit)
+
+    const itemStats: Record<number, { itemId: number; itemName: string; totalQuantity: number; totalRevenue: number }> = {}
+    
+    for (const saleItem of allSaleItems) {
+      const itemId = saleItem.itemId as number
+      if (!itemStats[itemId]) {
+        const [itemData] = await db.select({ name: items.name }).from(items).where(sql`${items.id} = ${itemId}`)
+        itemStats[itemId] = {
+          itemId,
+          itemName: itemData?.name || 'Unknown',
+          totalQuantity: 0,
+          totalRevenue: 0
+        }
+      }
+      itemStats[itemId].totalQuantity += saleItem.quantity || 0
+      itemStats[itemId].totalRevenue += saleItem.totalPrice || 0
+    }
+
+    const topSelling = Object.values(itemStats)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, limit)
+      .map(item => ({
+        itemId: item.itemId,
+        itemName: item.itemName,
+        totalQuantity: item.totalQuantity,
+        totalRevenue: Math.round(item.totalRevenue * 100) / 100
+      }))
     
     return json({ success: true, data: topSelling })
   } catch (error) {

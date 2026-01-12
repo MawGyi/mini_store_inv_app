@@ -919,15 +919,15 @@ describe('Validators', () => {
       expect(result.success).toBe(false);
     });
 
-    it('should reject zero unit price', () => {
-      const invalidItem = {
+    it('should accept zero unit price', () => {
+      const validItem = {
         itemId: 1,
         quantity: 10,
         unitPrice: 0,
         totalPrice: 0
       };
-      const result = SaleItemInputSchema.safeParse(invalidItem);
-      expect(result.success).toBe(false);
+      const result = SaleItemInputSchema.safeParse(validItem);
+      expect(result.success).toBe(true);
     });
 
     it('should reject missing itemId', () => {

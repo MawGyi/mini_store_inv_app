@@ -24,7 +24,7 @@ describe('Auth Store', () => {
   });
 
   it('should set loading state during login', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ success: true, user: { id: '1', email: 'test@test.com', name: 'Test', role: 'Admin' } })
@@ -37,11 +37,11 @@ describe('Auth Store', () => {
   });
 
   it('should login successfully with valid credentials', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '123', email: 'admin@ministore.com', name: 'Admin', role: 'Administrator' },
           redirectTo: '/dashboard'
         })
@@ -50,7 +50,7 @@ describe('Auth Store', () => {
     const result = await auth.login('admin@ministore.com', 'admin123');
     expect(result.success).toBe(true);
     expect(result.redirectTo).toBe('/dashboard');
-    
+
     const state = get(auth);
     expect(state.isAuthenticated).toBe(true);
     expect(state.user?.email).toBe('admin@ministore.com');
@@ -58,11 +58,11 @@ describe('Auth Store', () => {
   });
 
   it('should login successfully with remember me flag', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '123', email: 'test@test.com', name: 'Test', role: 'User' },
           redirectTo: '/dashboard'
         })
@@ -73,7 +73,7 @@ describe('Auth Store', () => {
   });
 
   it('should fail login with invalid credentials', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: false,
         json: () => Promise.resolve({ success: false, message: 'Invalid email or password' })
@@ -93,20 +93,21 @@ describe('Auth Store', () => {
   });
 
   it('should logout successfully', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ success: true })
+        json: () => Promise.resolve({
+          success: true,
+          user: { id: '1', email: 'admin@ministore.com', name: 'Admin', role: 'Administrator' }
+        })
       })
     );
-    
-    auth.login('admin@ministore.com', 'admin123');
-    await waitFor(() => {
-      expect(get(auth).isAuthenticated).toBe(true);
-    });
-    
+
+    await auth.login('admin@ministore.com', 'admin123');
+    expect(get(auth).isAuthenticated).toBe(true);
+
     await auth.logout();
-    
+
     const state = get(auth);
     expect(state.isAuthenticated).toBe(false);
     expect(state.user).toBeNull();
@@ -115,18 +116,18 @@ describe('Auth Store', () => {
   it('should logout even on network error', async () => {
     (global.fetch as any).mockRejectedValue(new Error('Network error'));
     await auth.logout();
-    
+
     const state = get(auth);
     expect(state.isAuthenticated).toBe(false);
     expect(state.user).toBeNull();
   });
 
   it('should use email prefix as default name', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '1', email: 'john.doe@test.com', role: 'User' },
           redirectTo: '/dashboard'
         })
@@ -137,11 +138,11 @@ describe('Auth Store', () => {
   });
 
   it('should use provided name in login response', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '1', email: 'test@test.com', name: 'Custom Name', role: 'User' },
           redirectTo: '/dashboard'
         })
@@ -152,11 +153,11 @@ describe('Auth Store', () => {
   });
 
   it('should handle missing user role with default', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '1', email: 'test@test.com', name: 'Test' },
           redirectTo: '/dashboard'
         })
@@ -181,11 +182,11 @@ describe('Derived Auth Stores', () => {
   });
 
   it('currentUser should return user when authenticated', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ 
-          success: true, 
+        json: () => Promise.resolve({
+          success: true,
           user: { id: '1', email: 'test@test.com', name: 'Test', role: 'User' }
         })
       })
@@ -201,7 +202,7 @@ describe('Derived Auth Stores', () => {
   });
 
   it('isAuthenticated should be true after login', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ success: true, user: { id: '1', email: 'test@test.com', name: 'Test', role: 'User' } })
@@ -216,7 +217,7 @@ describe('Derived Auth Stores', () => {
   });
 
   it('isLoading should be true during login', async () => {
-    (global.fetch as any).mockImplementation(() => 
+    (global.fetch as any).mockImplementation(() =>
       new Promise(resolve => setTimeout(resolve, 100)).then(() => ({
         ok: true,
         json: () => Promise.resolve({ success: true, user: { id: '1', email: 'test@test.com', name: 'Test', role: 'User' } })

@@ -7,14 +7,13 @@
 - [ ] Build succeeds locally (`npm run build`)
 - [ ] No console errors in development
 
-## Phase 1: Neon Database Setup
+## Phase 1: Turso Database Setup (Required for Vercel)
 
-- [ ] Created Neon account at https://neon.tech
-- [ ] Created project: `mini-store-inv`
-- [ ] Selected region: _____________
-- [ ] Copied connection string
-- [ ] Added `?sslmode=require` to connection string
-- [ ] Saved connection string securely
+- [x] Created Turso account at https://turso.tech
+- [x] Created database: `mini-store-inv`
+- [x] Generated Auth Token
+- [x] Copied Database URL (libsql://...)
+- [x] Saved URL and Token securely
 
 ## Phase 2: GitHub Setup
 
@@ -33,13 +32,10 @@
 
 ## Phase 4: Environment Variables
 
-- [ ] Added `POSTGRES_URL` with SSL
-- [ ] Added `POSTGRES_HOST`
-- [ ] Added `POSTGRES_USER`
-- [ ] Added `POSTGRES_PASSWORD`
-- [ ] Added `POSTGRES_DATABASE`
-- [ ] Selected all environments (Production, Preview, Development)
-- [ ] Redeployed after adding variables
+- [x] Added `TURSO_DATABASE_URL`
+- [x] Added `TURSO_AUTH_TOKEN`
+- [x] Selected all environments (Production, Preview, Development)
+- [x] Redeployed after adding variables
 
 ## Phase 5: Verification
 
@@ -56,7 +52,7 @@
 
 ## Post-Deployment
 
-- [ ] Saved app URL: _________________
+- [x] Saved app URL: https://mini-store-g8kfrdppl-waynemawoos-projects.vercel.app
 - [ ] Saved Vercel dashboard URL
 - [ ] Tested on mobile device
 - [ ] Verified no console errors in production

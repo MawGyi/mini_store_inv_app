@@ -6,6 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+![Turso](https://img.shields.io/badge/Turso-000000?style=for-the-badge&logo=turso&logoColor=white)
 
 A modern, full-stack inventory management application with real-time stock tracking, sales management, and multi-currency support.
 
@@ -107,7 +108,7 @@ Password: admin123
 | Framework | SvelteKit 2.0 + Svelte 4 |
 | Language | TypeScript |
 | Styling | Tailwind CSS 3.4 |
-| Database | SQLite (better-sqlite3) |
+| Database | SQLite (Dev) / Turso (Prod) |
 | Build Tool | Vite 5 |
 | State | Svelte Stores |
 | Auth | JWT + bcrypt |
@@ -258,12 +259,13 @@ JWT_SECRET=your-super-secret-key-change-in-production
 
 ## 🌐 Deployment
 
-### Vercel + Neon Postgres
+### Vercel + Turso (LibSQL)
 
-#### 1. Create Neon Database
-1. Sign up at [neon.tech](https://neon.tech)
-2. Create project: `mini-store-inv`
-3. Copy connection string (add `?sslmode=require`)
+#### 1. Setup Turso Database
+1. Sign up at [turso.tech](https://turso.tech)
+2. Create database: `mini-store-inv`
+3. Generate Auth Token
+4. Copy Database URL and Auth Token
 
 #### 2. Deploy to Vercel
 ```bash
@@ -279,11 +281,8 @@ In Vercel Settings → Environment Variables:
 
 | Variable | Value |
 |----------|-------|
-| `POSTGRES_URL` | `postgres://user:pass@host/db?sslmode=require` |
-| `POSTGRES_HOST` | `ep-xxx.neon.tech` |
-| `POSTGRES_USER` | Your username |
-| `POSTGRES_PASSWORD` | Your password |
-| `POSTGRES_DATABASE` | `mini_store_inv_app` |
+| `TURSO_DATABASE_URL` | `libsql://your-db.turso.io` |
+| `TURSO_AUTH_TOKEN` | `your-auth-token` |
 
 #### 4. Redeploy
 Changes auto-deploy on push to `main`.
@@ -322,7 +321,7 @@ MIT License - free for personal and commercial use.
 | Issue | Solution |
 |-------|----------|
 | Empty dashboard | Check database initialization in logs |
-| Connection refused | Verify `POSTGRES_URL` has `?sslmode=require` |
+| Database connection failed | Verify `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are set |
 | Dropdowns overlap | Clear cache, CSS should include custom select styling |
 | Mobile layout broken | Ensure viewport meta tag is present |
 | Build fails | Run `npm run build` locally to debug |

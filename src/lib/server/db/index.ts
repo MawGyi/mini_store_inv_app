@@ -2,7 +2,7 @@ import { createClient, type Client } from '@libsql/client'
 import { text, integer, real, sqliteTable } from 'drizzle-orm/sqlite-core'
 import { drizzle } from 'drizzle-orm/libsql'
 
-const isLocal = process.env.DATABASE_TYPE === 'sqlite' || !process.env.POSTGRES_URL
+const isLocal = process.env.DATABASE_TYPE === 'sqlite' || (!process.env.TURSO_DATABASE_URL && !process.env.POSTGRES_URL)
 
 let dbInstance: any
 let libsqlClient: Client | null = null
@@ -12,18 +12,14 @@ if (isLocal) {
   libsqlClient = createClient({
     url: 'file:sqlite.db',
   })
-} else if (process.env.TURSO_DATABASE_URL) {
+} else if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) {
   console.log('Using Turso/libsql database')
   libsqlClient = createClient({
     url: process.env.TURSO_DATABASE_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
   })
 } else {
-  console.log('Using Neon Postgres via libsql')
-  libsqlClient = createClient({
-    url: `libsql://${process.env.POSTGRES_HOST}`,
-    authToken: process.env.POSTGRES_PASSWORD,
-  })
+  console.error('No valid database configuration found. Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN.')
 }
 
 if (libsqlClient) {
@@ -84,13 +80,13 @@ export async function initializeDatabase() {
 
   try {
     await libsqlClient.execute('CREATE TABLE IF NOT EXISTS items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, item_code TEXT UNIQUE NOT NULL, price REAL NOT NULL, stock_quantity INTEGER NOT NULL, low_stock_threshold INTEGER NOT NULL, category TEXT, expiry_date INTEGER, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)')
-    
+
     await libsqlClient.execute('CREATE TABLE IF NOT EXISTS sales (id INTEGER PRIMARY KEY AUTOINCREMENT, sale_date INTEGER NOT NULL, total_amount REAL NOT NULL, payment_method TEXT NOT NULL, customer_name TEXT, invoice_number TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)')
-    
+
     await libsqlClient.execute('CREATE TABLE IF NOT EXISTS sale_items (id INTEGER PRIMARY KEY AUTOINCREMENT, sale_id INTEGER REFERENCES sales(id), item_id INTEGER REFERENCES items(id), quantity INTEGER NOT NULL, unit_price REAL NOT NULL, total_price REAL NOT NULL)')
-    
+
     await libsqlClient.execute('CREATE TABLE IF NOT EXISTS categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, created_at INTEGER NOT NULL)')
-    
+
     console.log('Database tables created successfully')
   } catch (error) {
     console.error('Error initializing database:', error)

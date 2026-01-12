@@ -53,3 +53,4 @@ package.json.bak
 svelte.config.js.bak
 vite.config.ts.bak
 .vercel/
+.vercel

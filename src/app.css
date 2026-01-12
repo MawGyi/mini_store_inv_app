@@ -13,16 +13,16 @@
   --primary-700: #0369a1;
   --primary-800: #075985;
   --primary-900: #0c4a6e;
-  
+
   --success-500: #22c55e;
   --success-600: #16a34a;
-  
+
   --warning-500: #f59e0b;
   --warning-600: #d97706;
-  
+
   --danger-500: #ef4444;
   --danger-600: #dc2626;
-  
+
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -60,6 +60,18 @@ body {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500;
   @apply transition-all duration-200 ease-in-out;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.01);
+}
+
+/* Select dropdown styling - proper padding for native arrow */
+select.input {
+  @apply pr-10 cursor-pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .input:hover:not(:disabled) {
@@ -180,16 +192,22 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
@@ -314,7 +332,12 @@ body {
 }
 
 .search-input-icon {
-  @apply absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400;
+  @apply absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none;
+}
+
+/* Search Input with Icon - Override default .input left padding */
+.input.pl-10 {
+  padding-left: 2.5rem !important;
 }
 
 /* Dropdown */
@@ -358,6 +381,7 @@ body {
     opacity: 0;
     transform: translateX(100%);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -420,4 +444,162 @@ body {
 /* Responsive Grid */
 .grid-responsive {
   @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6;
+}
+
+/* ===== MODERN UI ENHANCEMENTS ===== */
+
+/* Hover Lift Effect */
+.hover-lift {
+  @apply transition-all duration-300;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+}
+
+/* Enhanced Stat Card Icons */
+.stat-icon.primary {
+  @apply bg-gradient-to-br from-blue-400 to-blue-600 text-white;
+}
+
+.stat-icon.success {
+  @apply bg-gradient-to-br from-emerald-400 to-emerald-600 text-white;
+}
+
+.stat-icon.warning {
+  @apply bg-gradient-to-br from-amber-400 to-amber-600 text-white;
+}
+
+.stat-icon.danger {
+  @apply bg-gradient-to-br from-red-400 to-red-600 text-white;
+}
+
+.stat-icon.info {
+  @apply bg-gradient-to-br from-violet-400 to-violet-600 text-white;
+}
+
+/* Stats Grid Responsive */
+.stats-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6;
+}
+
+.stats-grid .stat-card {
+  @apply bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center gap-4;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-grid .stat-card:hover {
+  @apply shadow-lg border-gray-200;
+  transform: translateY(-2px);
+}
+
+.stats-grid .stat-icon {
+  @apply w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0;
+}
+
+.stats-grid .stat-info {
+  @apply flex flex-col min-w-0;
+}
+
+.stats-grid .stat-value {
+  @apply text-xl font-bold text-gray-900 truncate;
+}
+
+.stats-grid .stat-label {
+  @apply text-sm text-gray-500 truncate;
+}
+
+/* Enhanced Table Rows */
+.table tbody tr {
+  @apply transition-all duration-200;
+}
+
+.table tbody tr:hover {
+  @apply bg-gray-50;
+  transform: scale(1.002);
+}
+
+/* Enhanced Button Hover */
+.btn {
+  @apply transition-all duration-200;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Glassmorphism Modal Enhancement */
+.modal-overlay {
+  @apply backdrop-blur-md;
+  background: rgba(17, 24, 39, 0.6);
+}
+
+.modal {
+  @apply bg-white/95 backdrop-blur-lg;
+  animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Enhanced Input Focus */
+.input:focus {
+  @apply ring-4 ring-blue-500/10 border-blue-500;
+}
+
+/* Page Header Enhancement */
+.page-header {
+  @apply flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6;
+}
+
+.page-header .header-actions {
+  @apply flex items-center gap-3;
+}
+
+/* Smooth Skeleton Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  @apply bg-gray-200 rounded;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Card Hover Enhancement */
+.card {
+  @apply transition-all duration-300;
+}
+
+.card:hover {
+  @apply shadow-md;
+}
+
+/* Mobile Menu Improvements */
+@media (max-width: 1023px) {
+  .mobile-header {
+    @apply px-4;
+  }
 }

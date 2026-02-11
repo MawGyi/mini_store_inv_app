@@ -8,6 +8,14 @@ vi.mock('$lib/server/config', () => ({
     logConfiguration: vi.fn()
 }));
 
+// Mock sqlite and postgres adapters to avoid @libsql/client and ws import issues
+vi.mock('$lib/server/storage/sqlite', () => ({
+    SqliteAdapter: vi.fn()
+}));
+vi.mock('$lib/server/storage/postgres', () => ({
+    PostgresAdapter: vi.fn()
+}));
+
 // Import after mocking
 import {
     getStorage,

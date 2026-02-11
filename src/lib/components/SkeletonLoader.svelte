@@ -7,9 +7,9 @@
   
   const shimmer = `
     background: linear-gradient(90deg, 
-      var(--gray-200) 25%, 
-      var(--gray-100) 50%, 
-      var(--gray-200) 75%
+      var(--paper-aged) 25%, 
+      var(--paper-warm) 50%, 
+      var(--paper-aged) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
@@ -48,16 +48,16 @@
   }
   
   .skeleton-card {
-    background: white;
-    border-radius: var(--radius-lg);
+    background: var(--paper-card);
+    border-radius: var(--radius-sketchy-lg);
     padding: var(--spacing-4);
-    border: 1px solid var(--gray-200);
+    border: 2px dashed var(--border-ink);
   }
   
   .skeleton-card-header {
     height: 1.5rem;
-    background: var(--gray-200);
-    border-radius: var(--radius-md);
+    background: var(--paper-aged);
+    border-radius: var(--radius-sketchy);
     margin-bottom: var(--spacing-4);
   }
   
@@ -69,8 +69,8 @@
   
   .skeleton-line {
     height: 1rem;
-    background: var(--gray-200);
-    border-radius: var(--radius-md);
+    background: var(--paper-aged);
+    border-radius: var(--radius-sketchy);
   }
   
   .skeleton-table-row {
@@ -82,8 +82,8 @@
   
   .skeleton-cell {
     height: 1rem;
-    background: var(--gray-200);
-    border-radius: var(--radius-md);
+    background: var(--paper-aged);
+    border-radius: var(--radius-sketchy);
   }
   
   @keyframes shimmer {

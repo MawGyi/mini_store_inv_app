@@ -199,27 +199,27 @@
     </div>
   </div>
 
-  <div class="flex gap-2 border-b border-gray-200">
+  <div class="flex gap-2 border-b-2 border-ink">
     <button 
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'sales' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'sales' ? 'border-crimson text-crimson' : 'border-transparent text-ink-faint hover:text-ink'}"
       on:click={() => activeTab = 'sales'}
     >
       Sales Report
     </button>
     <button 
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'inventory' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'inventory' ? 'border-crimson text-crimson' : 'border-transparent text-ink-faint hover:text-ink'}"
       on:click={() => activeTab = 'inventory'}
     >
       Inventory Report
     </button>
     <button 
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'top-products' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'top-products' ? 'border-crimson text-crimson' : 'border-transparent text-ink-faint hover:text-ink'}"
       on:click={() => activeTab = 'top-products'}
     >
       Top Products
     </button>
     <button 
-      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'daily-summary' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'}"
+      class="px-4 py-2 text-sm font-medium border-b-2 transition-colors {activeTab === 'daily-summary' ? 'border-crimson text-crimson' : 'border-transparent text-ink-faint hover:text-ink'}"
       on:click={() => activeTab = 'daily-summary'}
     >
       Daily Summary
@@ -229,7 +229,7 @@
   {#if activeTab === 'sales'}
     <div class="card">
       <h2 class="card-header flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
         Sales Report
@@ -262,21 +262,21 @@
 
       {#if salesData?.summary}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="p-4 bg-primary-50 rounded-xl">
-            <p class="text-sm text-primary-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(salesData.summary.totalAmount, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(196,30,58,0.04); border: 2px solid rgba(196,30,58,0.1); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--crimson)">Total Revenue</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(salesData.summary.totalAmount, $settings.currency)}</p>
           </div>
-          <div class="p-4 bg-green-50 rounded-xl">
-            <p class="text-sm text-green-600 font-medium">Transactions</p>
-            <p class="text-2xl font-bold text-green-700">{salesData.summary.totalTransactions}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(58,107,62,0.06); border: 2px solid rgba(58,107,62,0.12); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--success)">Transactions</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{salesData.summary.totalTransactions}</p>
           </div>
-          <div class="p-4 bg-blue-50 rounded-xl">
-            <p class="text-sm text-blue-600 font-medium">Items Sold</p>
-            <p class="text-2xl font-bold text-blue-700">{salesData.summary.itemsSold}</p>
+          <div class="p-4 rounded-xl" style="background: var(--gold-ghost); border: 2px solid rgba(201,149,44,0.15); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--gold-dark)">Items Sold</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{salesData.summary.itemsSold}</p>
           </div>
-          <div class="p-4 bg-purple-50 rounded-xl">
-            <p class="text-sm text-purple-600 font-medium">Avg. Sale</p>
-            <p class="text-2xl font-bold text-purple-700">{formatCurrency(salesData.summary.avgSaleValue, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: var(--ink-ghost); border: 2px solid var(--border-ink); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--ink-faint)">Avg. Sale</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(salesData.summary.avgSaleValue, $settings.currency)}</p>
           </div>
         </div>
 
@@ -297,25 +297,25 @@
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-transparent">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Date</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Invoice</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Customer</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Payment</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Amount</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
               {#each salesData.sales as sale}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-3 text-sm text-gray-900">#{sale.id}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{sale.invoiceNumber}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{sale.customerName || '-'}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 capitalize">{sale.paymentMethod.replace('_', ' ')}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(sale.totalAmount, $settings.currency)}</td>
+                <tr class="hover:bg-transparent">
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">#{sale.id}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">{sale.saleDate ? new Date(sale.saleDate).toLocaleDateString() : '-'}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">{sale.invoiceNumber}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">{sale.customerName || '-'}</td>
+                  <td class="px-4 py-3 text-sm capitalize" style="color: var(--ink)">{sale.paymentMethod.replace('_', ' ')}</td>
+                  <td class="px-4 py-3 text-sm text-right font-medium" style="color: var(--ink)">{formatCurrency(sale.totalAmount, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>
@@ -323,11 +323,11 @@
         </div>
       {:else if isLoading}
         <div class="text-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p class="mt-4 text-gray-500">Loading report...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--crimson) mx-auto"></div>
+          <p class="mt-4" style="color: var(--ink-faint)">Loading report...</p>
         </div>
       {:else}
-        <div class="text-center py-12 text-gray-500">Select date range and click Refresh</div>
+        <div class="text-center py-12" style="color: var(--ink-faint)">Select date range and click Refresh</div>
       {/if}
     </div>
   {/if}
@@ -335,7 +335,7 @@
   {#if activeTab === 'inventory'}
     <div class="card">
       <h2 class="card-header flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
         </svg>
         Inventory Report
@@ -372,21 +372,21 @@
 
       {#if inventoryData?.summary}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="p-4 bg-blue-50 rounded-xl">
-            <p class="text-sm text-blue-600 font-medium">Total Items</p>
-            <p class="text-2xl font-bold text-blue-700">{inventoryData.summary.totalItems}</p>
+          <div class="p-4 rounded-xl" style="background: var(--gold-ghost); border: 2px solid rgba(201,149,44,0.15); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--gold-dark)">Total Items</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{inventoryData.summary.totalItems}</p>
           </div>
-          <div class="p-4 bg-green-50 rounded-xl">
-            <p class="text-sm text-green-600 font-medium">Total Stock</p>
-            <p class="text-2xl font-bold text-green-700">{inventoryData.summary.totalStock}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(58,107,62,0.06); border: 2px solid rgba(58,107,62,0.12); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--success)">Total Stock</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{inventoryData.summary.totalStock}</p>
           </div>
-          <div class="p-4 bg-primary-50 rounded-xl">
-            <p class="text-sm text-primary-600 font-medium">Total Value</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(inventoryData.summary.totalValue, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(196,30,58,0.04); border: 2px solid rgba(196,30,58,0.1); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--crimson)">Total Value</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(inventoryData.summary.totalValue, $settings.currency)}</p>
           </div>
-          <div class="p-4 bg-red-50 rounded-xl">
-            <p class="text-sm text-red-600 font-medium">Low Stock</p>
-            <p class="text-2xl font-bold text-red-700">{inventoryData.summary.lowStockCount}</p>
+          <div class="p-4 rounded-xl" style="background: var(--crimson-ghost); border: 2px solid rgba(184,28,46,0.12); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--crimson)">Low Stock</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{inventoryData.summary.lowStockCount}</p>
           </div>
         </div>
 
@@ -407,30 +407,30 @@
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-transparent">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Stock</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">ID</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Name</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Code</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Category</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Price</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Stock</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Status</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
               {#each inventoryData.items as item}
                 {@const isLow = item.stockQuantity <= item.lowStockThreshold}
                 {@const isOut = item.stockQuantity === 0}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-3 text-sm text-gray-900">#{item.id}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900">{item.name}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500">{item.itemCode}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500">{item.category || '-'}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price, $settings.currency)}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{item.stockQuantity}</td>
+                <tr class="hover:bg-transparent">
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">#{item.id}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">{item.name}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint)">{item.itemCode}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint)">{item.category || '-'}</td>
+                  <td class="px-4 py-3 text-sm text-right" style="color: var(--ink)">{formatCurrency(item.price, $settings.currency)}</td>
+                  <td class="px-4 py-3 text-sm text-right" style="color: var(--ink)">{item.stockQuantity}</td>
                   <td class="px-4 py-3">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full {isOut ? 'bg-red-100 text-red-700' : isLow ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">
+                    <span class="badge {isOut ? 'badge-danger' : isLow ? 'badge-warning' : 'badge-success'}">
                       {isOut ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock'}
                     </span>
                   </td>
@@ -441,11 +441,11 @@
         </div>
       {:else if isLoading}
         <div class="text-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p class="mt-4 text-gray-500">Loading report...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--crimson) mx-auto"></div>
+          <p class="mt-4" style="color: var(--ink-faint)">Loading report...</p>
         </div>
       {:else}
-        <div class="text-center py-12 text-gray-500">Select options and click Refresh</div>
+        <div class="text-center py-12" style="color: var(--ink-faint)">Select options and click Refresh</div>
       {/if}
     </div>
   {/if}
@@ -453,7 +453,7 @@
   {#if activeTab === 'top-products'}
     <div class="card">
       <h2 class="card-header flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
         Top Products
@@ -486,17 +486,17 @@
 
       {#if topProductsData?.summary}
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          <div class="p-4 bg-primary-50 rounded-xl">
-            <p class="text-sm text-primary-600 font-medium">Total Sold</p>
-            <p class="text-2xl font-bold text-primary-700">{topProductsData.summary.totalQuantity}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(196,30,58,0.04); border: 2px solid rgba(196,30,58,0.1); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--crimson)">Total Sold</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{topProductsData.summary.totalQuantity}</p>
           </div>
-          <div class="p-4 bg-green-50 rounded-xl">
-            <p class="text-sm text-green-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-green-700">{formatCurrency(topProductsData.summary.totalRevenue, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(58,107,62,0.06); border: 2px solid rgba(58,107,62,0.12); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--success)">Total Revenue</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(topProductsData.summary.totalRevenue, $settings.currency)}</p>
           </div>
-          <div class="p-4 bg-blue-50 rounded-xl">
-            <p class="text-sm text-blue-600 font-medium">Products</p>
-            <p class="text-2xl font-bold text-blue-700">{topProductsData.summary.productCount}</p>
+          <div class="p-4 rounded-xl" style="background: var(--gold-ghost); border: 2px solid rgba(201,149,44,0.15); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--gold-dark)">Products</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{topProductsData.summary.productCount}</p>
           </div>
         </div>
 
@@ -517,23 +517,23 @@
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-transparent">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty Sold</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenue</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">#</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Product</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Code</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Qty Sold</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Revenue</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
               {#each topProductsData.products as product, i}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-3 text-sm text-gray-500">{i + 1}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 font-medium">{product.name}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500">{product.itemCode}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right">{product.quantity}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(product.revenue, $settings.currency)}</td>
+                <tr class="hover:bg-transparent">
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint)">{i + 1}</td>
+                  <td class="px-4 py-3 text-sm font-medium" style="color: var(--ink)">{product.name}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint)">{product.itemCode}</td>
+                  <td class="px-4 py-3 text-sm text-right" style="color: var(--ink)">{product.quantity}</td>
+                  <td class="px-4 py-3 text-sm text-right font-medium" style="color: var(--ink)">{formatCurrency(product.revenue, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>
@@ -541,11 +541,11 @@
         </div>
       {:else if isLoading}
         <div class="text-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p class="mt-4 text-gray-500">Loading report...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--crimson) mx-auto"></div>
+          <p class="mt-4" style="color: var(--ink-faint)">Loading report...</p>
         </div>
       {:else}
-        <div class="text-center py-12 text-gray-500">Select date range and click Refresh</div>
+        <div class="text-center py-12" style="color: var(--ink-faint)">Select date range and click Refresh</div>
       {/if}
     </div>
   {/if}
@@ -553,7 +553,7 @@
   {#if activeTab === 'daily-summary'}
     <div class="card">
       <h2 class="card-header flex items-center gap-2">
-        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
         Daily Summary
@@ -579,21 +579,21 @@
 
       {#if dailySummaryData?.summary}
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div class="p-4 bg-primary-50 rounded-xl">
-            <p class="text-sm text-primary-600 font-medium">Total Revenue</p>
-            <p class="text-2xl font-bold text-primary-700">{formatCurrency(dailySummaryData.summary.totalRevenue, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(196,30,58,0.04); border: 2px solid rgba(196,30,58,0.1); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--crimson)">Total Revenue</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(dailySummaryData.summary.totalRevenue, $settings.currency)}</p>
           </div>
-          <div class="p-4 bg-green-50 rounded-xl">
-            <p class="text-sm text-green-600 font-medium">Transactions</p>
-            <p class="text-2xl font-bold text-green-700">{dailySummaryData.summary.totalTransactions}</p>
+          <div class="p-4 rounded-xl" style="background: rgba(58,107,62,0.06); border: 2px solid rgba(58,107,62,0.12); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--success)">Transactions</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{dailySummaryData.summary.totalTransactions}</p>
           </div>
-          <div class="p-4 bg-blue-50 rounded-xl">
-            <p class="text-sm text-blue-600 font-medium">Avg. Daily</p>
-            <p class="text-2xl font-bold text-blue-700">{formatCurrency(dailySummaryData.summary.avgDailySales, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: var(--gold-ghost); border: 2px solid rgba(201,149,44,0.15); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--gold-dark)">Avg. Daily</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(dailySummaryData.summary.avgDailySales, $settings.currency)}</p>
           </div>
-          <div class="p-4 bg-purple-50 rounded-xl">
-            <p class="text-sm text-purple-600 font-medium">Avg. Transaction</p>
-            <p class="text-2xl font-bold text-purple-700">{formatCurrency(dailySummaryData.summary.avgTransactionValue, $settings.currency)}</p>
+          <div class="p-4 rounded-xl" style="background: var(--ink-ghost); border: 2px solid var(--border-ink); border-radius: 6px 8px 6px 7px">
+            <p class="text-sm font-medium" style="color: var(--ink-faint)">Avg. Transaction</p>
+            <p class="text-2xl font-bold" style="color: var(--ink)">{formatCurrency(dailySummaryData.summary.avgTransactionValue, $settings.currency)}</p>
           </div>
         </div>
 
@@ -614,21 +614,21 @@
 
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-gray-50">
+            <thead class="bg-transparent">
               <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total Sales</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Transactions</th>
-                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Avg. Sale</th>
+                <th class="px-4 py-3 text-left text-xs font-medium uppercase" style="color: var(--ink-faint)">Date</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Total Sales</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Transactions</th>
+                <th class="px-4 py-3 text-right text-xs font-medium uppercase" style="color: var(--ink-faint)">Avg. Sale</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
               {#each dailySummaryData.daily as day}
-                <tr class="hover:bg-gray-50">
-                  <td class="px-4 py-3 text-sm text-gray-900">{day.date}</td>
-                  <td class="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(day.totalSales, $settings.currency)}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500 text-right">{day.transactionCount}</td>
-                  <td class="px-4 py-3 text-sm text-gray-500 text-right">{formatCurrency(day.avgSaleValue, $settings.currency)}</td>
+                <tr class="hover:bg-transparent">
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink)">{day.date}</td>
+                  <td class="px-4 py-3 text-sm text-right font-medium" style="color: var(--ink)">{formatCurrency(day.totalSales, $settings.currency)}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint) text-right">{day.transactionCount}</td>
+                  <td class="px-4 py-3 text-sm" style="color: var(--ink-faint) text-right">{formatCurrency(day.avgSaleValue, $settings.currency)}</td>
                 </tr>
               {/each}
             </tbody>
@@ -636,11 +636,11 @@
         </div>
       {:else if isLoading}
         <div class="text-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p class="mt-4 text-gray-500">Loading report...</p>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--crimson) mx-auto"></div>
+          <p class="mt-4" style="color: var(--ink-faint)">Loading report...</p>
         </div>
       {:else}
-        <div class="text-center py-12 text-gray-500">Select period and click Refresh</div>
+        <div class="text-center py-12" style="color: var(--ink-faint)">Select period and click Refresh</div>
       {/if}
     </div>
   {/if}

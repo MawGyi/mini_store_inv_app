@@ -16,9 +16,9 @@
   })
 </script>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center">
+<div class="min-h-screen flex items-center justify-center" style="background: var(--paper)">
   <div class="text-center">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-    <p class="mt-4 text-gray-600">Loading...</p>
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style="border-color: var(--crimson)"></div>
+    <p class="mt-4" style="color: var(--ink-faint)">Loading...</p>
   </div>
 </div>

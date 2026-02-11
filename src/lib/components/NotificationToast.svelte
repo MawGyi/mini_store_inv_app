@@ -65,36 +65,36 @@
     switch (type) {
       case 'success':
         return {
-          bg: 'var(--success-50)',
-          border: 'var(--success-200)',
-          iconBg: 'var(--success-100)',
-          iconColor: 'var(--success-600)',
-          progressBg: 'var(--success-500)'
+          bg: 'rgba(58, 107, 62, 0.06)',
+          border: 'rgba(58, 107, 62, 0.15)',
+          iconBg: 'rgba(58, 107, 62, 0.1)',
+          iconColor: 'var(--success)',
+          progressBg: 'var(--success)'
         };
       case 'error':
         return {
-          bg: 'var(--danger-50)',
-          border: 'var(--danger-200)',
-          iconBg: 'var(--danger-100)',
-          iconColor: 'var(--danger-600)',
-          progressBg: 'var(--danger-500)'
+          bg: 'rgba(184, 28, 46, 0.06)',
+          border: 'rgba(184, 28, 46, 0.15)',
+          iconBg: 'var(--crimson-ghost)',
+          iconColor: 'var(--crimson)',
+          progressBg: 'var(--crimson)'
         };
       case 'warning':
         return {
-          bg: 'var(--warning-50)',
-          border: 'var(--warning-200)',
-          iconBg: 'var(--warning-100)',
-          iconColor: 'var(--warning-600)',
-          progressBg: 'var(--warning-500)'
+          bg: 'rgba(184, 98, 27, 0.06)',
+          border: 'rgba(184, 98, 27, 0.15)',
+          iconBg: 'rgba(184, 98, 27, 0.1)',
+          iconColor: 'var(--warning)',
+          progressBg: 'var(--warning)'
         };
       case 'info':
       default:
         return {
-          bg: 'var(--primary-50)',
-          border: 'var(--primary-200)',
-          iconBg: 'var(--primary-100)',
-          iconColor: 'var(--primary-600)',
-          progressBg: 'var(--primary-500)'
+          bg: 'var(--gold-ghost)',
+          border: 'rgba(201, 149, 44, 0.2)',
+          iconBg: 'rgba(201, 149, 44, 0.12)',
+          iconColor: 'var(--gold-dark)',
+          progressBg: 'var(--gold)'
         };
     }
   }
@@ -129,14 +129,14 @@
 <style>
   .notification-toast {
     background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
+    border: 2px solid var(--border, var(--border-ink));
+    border-radius: var(--radius-sketchy-lg);
+    box-shadow: 3px 3px 0px var(--border-ink);
     margin-bottom: var(--spacing-3);
     overflow: hidden;
     transform: translateX(100%);
     opacity: 0;
-    transition: all var(--transition-normal);
+    transition: all 0.2s ease;
     position: relative;
     max-width: 400px;
   }
@@ -156,11 +156,12 @@
   .notification-icon {
     width: 40px;
     height: 40px;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-sketchy);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    border: 1.5px solid var(--border-ink);
   }
 
   .notification-message {
@@ -170,19 +171,20 @@
 
   .notification-message p {
     margin: 0;
-    color: var(--gray-700);
+    color: var(--ink);
     font-size: var(--font-size-sm);
     line-height: 1.5;
+    font-family: 'Mali', sans-serif;
   }
 
   .notification-close {
     background: none;
     border: none;
-    color: var(--gray-400);
+    color: var(--ink-faint);
     cursor: pointer;
     padding: var(--spacing-1);
-    border-radius: var(--radius-full);
-    transition: all var(--transition-fast);
+    border-radius: var(--radius-sketchy);
+    transition: all 0.15s ease;
     flex-shrink: 0;
     width: 24px;
     height: 24px;
@@ -192,20 +194,20 @@
   }
 
   .notification-close:hover {
-    background: var(--gray-100);
-    color: var(--gray-600);
+    background: var(--ink-ghost);
+    color: var(--ink);
   }
 
   .notification-progress {
     height: 3px;
-    background: var(--gray-200);
+    background: var(--paper-aged);
     overflow: hidden;
   }
 
   .progress-bar {
     height: 100%;
     transition: width 0.1s linear;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-radius: 0 0 var(--radius-sketchy-lg) var(--radius-sketchy-lg);
   }
 
   /* Responsive Design */

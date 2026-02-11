@@ -185,16 +185,19 @@
 </div>
 
 <style>
+  /* ============================================
+     ADVANCED SEARCH — THE SHOPKEEPER'S LEDGER THEME
+     ============================================ */
   .advanced-search {
-    background: white;
-    border-radius: var(--radius-xl);
+    background: var(--paper-card);
+    border-radius: var(--radius-sketchy-xl);
     padding: var(--spacing-6);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--gray-200);
+    box-shadow: 3px 3px 0px var(--border-ink);
+    border: 2px solid var(--border-ink);
     margin-bottom: var(--spacing-6);
   }
 
-  /* Search Section */
+  /* --- Search Section --- */
   .search-section {
     margin-bottom: var(--spacing-6);
   }
@@ -208,7 +211,7 @@
   .search-icon {
     position: absolute;
     left: var(--spacing-4);
-    color: var(--gray-400);
+    color: var(--ink-faint);
     z-index: 1;
   }
 
@@ -216,52 +219,54 @@
     width: 100%;
     padding: var(--spacing-4) var(--spacing-12) var(--spacing-4) var(--spacing-12);
     font-size: var(--font-size-base);
-    border: 2px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    background: var(--gray-50);
-    transition: all var(--transition-normal);
-    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--border-ink);
+    border-radius: var(--radius-sketchy-lg);
+    background: var(--paper);
+    transition: all 0.15s ease;
+    color: var(--ink);
+    font-family: 'Mali', sans-serif;
   }
 
   .search-input:focus {
     outline: none;
-    border-color: var(--primary-500);
-    background: white;
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+    border-color: var(--crimson);
+    background: var(--paper-card);
+    box-shadow: 0 0 0 3px var(--crimson-ghost);
   }
 
   .search-input::placeholder {
-    color: var(--gray-400);
+    color: var(--ink-faint);
   }
 
   .clear-search {
     position: absolute;
     right: var(--spacing-4);
-    background: var(--gray-200);
-    border: none;
-    border-radius: var(--radius-full);
+    background: var(--paper-aged);
+    border: 1.5px solid var(--border-ink);
+    border-radius: var(--radius-sketchy);
     width: 24px;
     height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: var(--gray-600);
-    transition: all var(--transition-fast);
+    color: var(--ink-faint);
+    transition: all 0.15s ease;
   }
 
   .clear-search:hover {
-    background: var(--gray-300);
-    color: var(--gray-700);
+    background: var(--paper-warm);
+    color: var(--ink);
+    border-color: var(--ink);
   }
 
-  /* Active Filters */
+  /* --- Active Filters --- */
   .active-filters {
     margin-bottom: var(--spacing-6);
     padding: var(--spacing-4);
-    background: var(--gray-50);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--gray-200);
+    background: var(--paper-warm);
+    border-radius: var(--radius-sketchy-lg);
+    border: 1.5px dashed var(--border-ink);
   }
 
   .active-filters-header {
@@ -273,23 +278,25 @@
 
   .active-filters-label {
     font-size: var(--font-size-sm);
-    font-weight: 500;
-    color: var(--gray-700);
+    font-weight: 600;
+    color: var(--ink);
+    font-family: 'Mali', sans-serif;
   }
 
   .clear-all-filters {
     background: none;
     border: none;
-    color: var(--primary-600);
+    color: var(--crimson);
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: underline;
-    transition: color var(--transition-fast);
+    transition: color 0.15s ease;
+    font-family: 'Mali', sans-serif;
   }
 
   .clear-all-filters:hover {
-    color: var(--primary-700);
+    color: var(--crimson-dark);
   }
 
   .filter-chips {
@@ -303,30 +310,30 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-2) var(--spacing-3);
-    background: white;
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-full);
+    background: var(--paper-card);
+    border: 1.5px solid var(--border-ink);
+    border-radius: var(--radius-sketchy);
     font-size: var(--font-size-sm);
-    color: var(--gray-700);
-    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    font-family: 'Mali', sans-serif;
   }
 
   .search-chip {
-    background: var(--primary-50);
-    border-color: var(--primary-200);
-    color: var(--primary-700);
+    background: var(--crimson-ghost);
+    border-color: rgba(184, 28, 46, 0.2);
+    color: var(--crimson);
   }
 
   .status-chip {
-    background: var(--success-50);
-    border-color: var(--success-200);
-    color: var(--success-700);
+    background: rgba(58, 107, 62, 0.08);
+    border-color: rgba(58, 107, 62, 0.2);
+    color: var(--success);
   }
 
   .stock-chip {
-    background: var(--warning-50);
-    border-color: var(--warning-200);
-    color: var(--warning-700);
+    background: rgba(184, 98, 27, 0.06);
+    border-color: rgba(184, 98, 27, 0.15);
+    color: var(--warning);
   }
 
   .remove-filter {
@@ -336,16 +343,16 @@
     cursor: pointer;
     color: inherit;
     opacity: 0.7;
-    transition: opacity var(--transition-fast);
+    transition: opacity 0.15s ease;
   }
 
   .remove-filter:hover {
     opacity: 1;
   }
 
-  /* Filters Section */
+  /* --- Filters Section --- */
   .filters-section {
-    border-top: 1px solid var(--gray-200);
+    border-top: 2px dashed var(--border-ink);
     padding-top: var(--spacing-6);
   }
 
@@ -363,30 +370,32 @@
 
   .filter-group label {
     font-size: var(--font-size-sm);
-    font-weight: 500;
-    color: var(--gray-700);
+    font-weight: 600;
+    color: var(--ink);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    font-family: 'Mali', sans-serif;
   }
 
   .filter-select {
     padding: var(--spacing-3) var(--spacing-4);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-md);
-    background: white;
+    border: 2px solid var(--border-ink);
+    border-radius: var(--radius-sketchy);
+    background: var(--paper);
     font-size: var(--font-size-sm);
-    color: var(--gray-700);
+    color: var(--ink);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.15s ease;
+    font-family: 'Mali', sans-serif;
   }
 
   .filter-select:focus {
     outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+    border-color: var(--crimson);
+    box-shadow: 0 0 0 3px var(--crimson-ghost);
   }
 
-  /* Sort Buttons */
+  /* --- Sort Buttons --- */
   .sort-buttons {
     display: flex;
     flex-direction: column;
@@ -398,24 +407,26 @@
     align-items: center;
     gap: var(--spacing-2);
     padding: var(--spacing-2) var(--spacing-3);
-    background: var(--gray-100);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-md);
+    background: var(--paper-warm);
+    border: 1.5px solid var(--border-ink);
+    border-radius: var(--radius-sketchy);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: all 0.15s ease;
     font-size: var(--font-size-sm);
-    color: var(--gray-700);
+    color: var(--ink-light);
+    font-family: 'Mali', sans-serif;
   }
 
   .sort-btn:hover {
-    background: var(--gray-200);
-    border-color: var(--gray-400);
+    background: var(--paper-card);
+    border-color: var(--ink);
   }
 
   .sort-btn.active {
-    background: var(--primary-100);
-    border-color: var(--primary-300);
-    color: var(--primary-700);
+    background: var(--crimson-ghost);
+    border-color: rgba(184, 28, 46, 0.3);
+    color: var(--crimson);
+    font-weight: 600;
   }
 
   .sort-icon {
@@ -429,10 +440,10 @@
 
   .sort-arrow {
     font-weight: bold;
-    color: var(--primary-600);
+    color: var(--crimson);
   }
 
-  /* Responsive Design */
+  /* --- Responsive Design --- */
   @media (max-width: 768px) {
     .advanced-search {
       padding: var(--spacing-4);

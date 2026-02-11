@@ -44,12 +44,12 @@
   <!-- Profile Card -->
   <div class="card">
     <div class="flex items-center gap-6 mb-6">
-      <div class="w-24 h-24 bg-primary-100 text-primary-700 rounded-2xl flex items-center justify-center text-3xl font-bold">
+      <div class="w-24 h-24 rounded-2xl flex items-center justify-center text-3xl font-bold" style="background: rgba(196,30,58,0.08); color: var(--crimson); border: 2px solid rgba(196,30,58,0.15)">
         U
       </div>
       <div>
-        <h2 class="text-xl font-bold text-gray-900">{fullName}</h2>
-        <p class="text-gray-500">{role}</p>
+        <h2 class="text-xl font-bold" style="color: var(--ink); font-family: 'Caveat Brush', cursive">{fullName}</h2>
+        <p style="color: var(--ink-faint)">{role}</p>
         <span class="badge badge-success mt-2">Active</span>
       </div>
     </div>
@@ -58,7 +58,7 @@
   <!-- Personal Information -->
   <div class="card">
     <h2 class="card-header flex items-center gap-2">
-      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
       Personal Information
@@ -97,7 +97,7 @@
   <!-- Change Password -->
   <div class="card">
     <h2 class="card-header flex items-center gap-2">
-      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
       </svg>
       Change Password
@@ -131,24 +131,24 @@
   <!-- Account Stats -->
   <div class="card">
     <h2 class="card-header flex items-center gap-2">
-      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5" style="color: var(--ink-faint)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
       </svg>
       Account Statistics
     </h2>
     
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="p-4 bg-gray-50 rounded-xl text-center">
-        <p class="text-3xl font-bold text-gray-900">6</p>
-        <p class="text-sm text-gray-500">Total Sales</p>
+      <div class="p-4 rounded-xl text-center" style="background: var(--paper-warm); border: 2px solid var(--border-ink); border-radius: 6px 8px 6px 7px">
+        <p class="text-3xl font-bold" style="color: var(--ink)">6</p>
+        <p class="text-sm" style="color: var(--ink-faint)">Total Sales</p>
       </div>
-      <div class="p-4 bg-gray-50 rounded-xl text-center">
-        <p class="text-3xl font-bold text-gray-900">7</p>
-        <p class="text-sm text-gray-500">Items Managed</p>
+      <div class="p-4 rounded-xl text-center" style="background: var(--paper-warm); border: 2px solid var(--border-ink); border-radius: 6px 8px 6px 7px">
+        <p class="text-3xl font-bold" style="color: var(--ink)">7</p>
+        <p class="text-sm" style="color: var(--ink-faint)">Items Managed</p>
       </div>
-      <div class="p-4 bg-gray-50 rounded-xl text-center">
-        <p class="text-3xl font-bold text-gray-900">Dec 2025</p>
-        <p class="text-sm text-gray-500">Member Since</p>
+      <div class="p-4 rounded-xl text-center" style="background: var(--paper-warm); border: 2px solid var(--border-ink); border-radius: 6px 8px 6px 7px">
+        <p class="text-3xl font-bold" style="color: var(--ink)">Dec 2025</p>
+        <p class="text-sm" style="color: var(--ink-faint)">Member Since</p>
       </div>
     </div>
   </div>

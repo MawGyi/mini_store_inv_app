@@ -1,6 +1,6 @@
 import { db } from '$lib/server/db'
 import { items, saleItems, sales } from '$lib/server/db'
-import { sql } from 'drizzle-orm'
+import { sql, eq, desc, sum } from 'drizzle-orm'
 import { json } from '@sveltejs/kit'
 
 function isDbAvailable() {
@@ -13,24 +13,27 @@ export async function GET({ url }: { url: URL }) {
   }
 
   const limit = parseInt(url.searchParams.get('limit') || '5')
-  
+
   try {
     const allSaleItems = await db.select({
       itemId: saleItems.itemId,
       quantity: saleItems.quantity,
       totalPrice: saleItems.totalPrice
     })
-    .from(saleItems)
+      .from(saleItems)
+
+    // Fetch all items upfront to avoid N+1 queries
+    const allItems = await db.select({ id: items.id, name: items.name }).from(items)
+    const itemMap = new Map<number, string>(allItems.map((i: { id: number; name: string }) => [i.id, i.name]))
 
     const itemStats: Record<number, { itemId: number; itemName: string; totalQuantity: number; totalRevenue: number }> = {}
-    
+
     for (const saleItem of allSaleItems) {
       const itemId = saleItem.itemId as number
       if (!itemStats[itemId]) {
-        const [itemData] = await db.select({ name: items.name }).from(items).where(sql`${items.id} = ${itemId}`)
         itemStats[itemId] = {
           itemId,
-          itemName: itemData?.name || 'Unknown',
+          itemName: itemMap.get(itemId) || 'Unknown',
           totalQuantity: 0,
           totalRevenue: 0
         }
@@ -48,7 +51,7 @@ export async function GET({ url }: { url: URL }) {
         totalQuantity: item.totalQuantity,
         totalRevenue: Math.round(item.totalRevenue * 100) / 100
       }))
-    
+
     return json({ success: true, data: topSelling })
   } catch (error) {
     console.error('Top selling error:', error)

@@ -45,9 +45,9 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     }
 
     const body: unknown = await request.json()
-    
+
     const result = ItemUpdateSchema.safeParse(body)
-    
+
     if (!result.success) {
       const errors = formatZodError(result.error)
       return json({
@@ -58,7 +58,7 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     }
 
     const data = result.data as Partial<ItemUpdateInput>
-    
+
     const existingItems = await db.select().from(items).where(eq(items.id, id)).limit(1)
     const existingItem = existingItems[0]
     if (!existingItem) {
@@ -84,7 +84,7 @@ export async function PUT({ request, params }: { request: Request; params: { id:
     }
 
     const updateData: Record<string, unknown> = {
-      updatedAt: new Date()
+      updatedAt: Date.now()
     }
 
     if (data.name !== undefined) updateData.name = data.name

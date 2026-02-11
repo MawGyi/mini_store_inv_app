@@ -64,8 +64,8 @@ export async function GET({ url }: { url: URL }) {
     }
   } catch (error) {
     console.error('Dashboard API error:', error)
-    return json({ 
-      success: false, 
+    return json({
+      success: false,
       error: 'Database connection failed. Please ensure Vercel Postgres is configured.',
       details: process.env.NODE_ENV === 'development' ? String(error) : undefined
     }, { status: 500 })
@@ -76,72 +76,72 @@ async function handleOverview() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayMs = today.getTime()
-  
+
   const weekAgo = new Date(today)
   weekAgo.setDate(weekAgo.getDate() - 7)
   const weekAgoMs = weekAgo.getTime()
-  
+
   const monthAgo = new Date(today)
   monthAgo.setMonth(monthAgo.getMonth() - 1)
   const monthAgoMs = monthAgo.getTime()
-  
+
   const [totalSalesResult] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
-  
+
   const [totalTransactions] = await db.select({
     count: count()
   }).from(sales)
-  
+
   const [totalItemsResult] = await db.select({
     total: sum(items.stockQuantity).mapWith(Number)
   }).from(items)
-  
+
   const [itemCountResult] = await db.select({
     count: count()
   }).from(items)
-  
+
   const [lowStockItems] = await db.select({
     count: count()
   }).from(items)
     .where(sql`${items.stockQuantity} <= ${items.lowStockThreshold}`)
-  
+
   const [outOfStockItems] = await db.select({
     count: count()
   }).from(items)
     .where(eq(items.stockQuantity, 0))
-  
+
   const [todaySales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
     .where(gte(sales.saleDate, todayMs))
-  
+
   const [todayTransactionCount] = await db.select({
     count: count()
   }).from(sales)
     .where(gte(sales.saleDate, todayMs))
-  
+
   const [weekSales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
     .where(gte(sales.saleDate, weekAgoMs))
-  
+
   const [monthSales] = await db.select({
     total: sum(sales.totalAmount).mapWith(Number)
   }).from(sales)
     .where(gte(sales.saleDate, monthAgoMs))
-  
-  const [recentSales] = await db.select({
+
+  const recentSales = await db.select({
     id: sales.id,
     saleDate: sales.saleDate,
     totalAmount: sales.totalAmount,
     invoiceNumber: sales.invoiceNumber,
     customerName: sales.customerName
   })
-  .from(sales)
-  .orderBy(desc(sales.saleDate))
-  .limit(5)
-  
+    .from(sales)
+    .orderBy(desc(sales.saleDate))
+    .limit(5)
+
   const overview: DashboardOverview = {
     totalSales: totalSalesResult?.total || 0,
     totalTransactions: totalTransactions?.count || 0,
@@ -151,7 +151,7 @@ async function handleOverview() {
     weekSales: weekSales?.total || 0,
     monthSales: monthSales?.total || 0
   }
-  
+
   return json({
     success: true,
     data: {
@@ -181,7 +181,7 @@ async function handleOverview() {
 
 async function handleAlerts() {
   const alerts: DashboardAlert[] = []
-  
+
   const allItems = await db.select({
     id: items.id,
     name: items.name,
@@ -191,29 +191,29 @@ async function handleAlerts() {
     updatedAt: items.updatedAt,
     expiryDate: items.expiryDate
   }).from(items)
-  
+
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const thirtyDaysAgoMs = thirtyDaysAgo.getTime()
-  
+
   const thirtyDaysFromNow = new Date()
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
   const thirtyDaysFromNowMs = thirtyDaysFromNow.getTime()
-  
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayMs = today.getTime()
-  
+
   const recentSales = await db.select({
     saleId: saleItems.saleId,
     itemId: saleItems.itemId
   })
-  .from(saleItems)
-  .innerJoin(sales, eq(saleItems.saleId, sales.id))
-  .where(gte(sales.saleDate, thirtyDaysAgoMs))
-  
+    .from(saleItems)
+    .innerJoin(sales, eq(saleItems.saleId, sales.id))
+    .where(gte(sales.saleDate, thirtyDaysAgoMs))
+
   const soldItemIds = new Set(recentSales.map((s: any) => s.itemId))
-  
+
   for (const item of allItems) {
     if (item.stockQuantity === 0) {
       alerts.push({
@@ -226,8 +226,8 @@ async function handleAlerts() {
         stockQuantity: item.stockQuantity
       })
     } else if (item.stockQuantity <= item.lowStockThreshold) {
-      const severity = item.stockQuantity <= 2 ? 'critical' : 
-                      item.stockQuantity <= Math.floor(item.lowStockThreshold / 2) ? 'high' : 'medium'
+      const severity = item.stockQuantity <= 2 ? 'critical' :
+        item.stockQuantity <= Math.floor(item.lowStockThreshold / 2) ? 'high' : 'medium'
       alerts.push({
         type: 'low_stock',
         message: `${item.name} is running low (${item.stockQuantity} remaining)`,
@@ -248,11 +248,11 @@ async function handleAlerts() {
         stockQuantity: item.stockQuantity
       })
     }
-    
+
     if (item.expiryDate) {
       const expiryDate = new Date(item.expiryDate)
       const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      
+
       if (daysUntilExpiry < 0) {
         alerts.push({
           type: 'expired',
@@ -281,7 +281,7 @@ async function handleAlerts() {
       }
     }
   }
-  
+
   const sortedAlerts = alerts.sort((a, b) => {
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
     if (severityOrder[a.severity] !== severityOrder[b.severity]) {
@@ -289,6 +289,6 @@ async function handleAlerts() {
     }
     return 0
   })
-  
+
   return json({ success: true, data: sortedAlerts })
 }

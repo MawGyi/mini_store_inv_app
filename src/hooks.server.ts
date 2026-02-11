@@ -51,14 +51,6 @@ const adminPaths = ['/api/items', '/api/sales']
 export const handle: Handle = async ({ event, resolve }) => {
   await ensureDbInitialized()
   
-  const response = await resolve(event)
-  
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
-  
   const url = event.url.pathname
   
   for (const path of protectedPaths) {
@@ -68,23 +60,19 @@ export const handle: Handle = async ({ event, resolve }) => {
       const session = getSessionFromCookies(cookieObj)
       
       if (!session.valid) {
-        if (url.startsWith('/api/')) {
-          return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' }
-          })
-        }
+        return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        })
       }
       
-      if (url.startsWith('/api/')) {
-        for (const adminPath of adminPaths) {
-          if (url.startsWith(adminPath) && (url.endsWith('/') || url.split('/').length > 3)) {
-            if (session.user?.role !== 'Administrator') {
-              return new Response(JSON.stringify({ success: false, error: 'Forbidden: Admin access required' }), {
-                status: 403,
-                headers: { 'Content-Type': 'application/json' }
-              })
-            }
+      for (const adminPath of adminPaths) {
+        if (url.startsWith(adminPath) && (url.endsWith('/') || url.split('/').length > 3)) {
+          if (session.user?.role !== 'Administrator') {
+            return new Response(JSON.stringify({ success: false, error: 'Forbidden: Admin access required' }), {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' }
+            })
           }
         }
       }
@@ -92,6 +80,14 @@ export const handle: Handle = async ({ event, resolve }) => {
       break
     }
   }
+  
+  const response = await resolve(event)
+  
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()')
   
   return response
 }

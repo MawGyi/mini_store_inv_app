@@ -52,7 +52,12 @@ function createSettingsStore() {
       if (browser) {
         const stored = localStorage.getItem('app_settings')
         if (stored) {
-          set({ ...defaultSettings, ...JSON.parse(stored) })
+          try {
+            set({ ...defaultSettings, ...JSON.parse(stored) })
+          } catch {
+            // Invalid JSON in localStorage, use defaults
+            console.warn('Invalid settings data in localStorage, using defaults')
+          }
         }
       }
     },

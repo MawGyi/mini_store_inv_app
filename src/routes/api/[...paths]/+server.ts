@@ -132,6 +132,13 @@ app.post('/auth/login', async (c) => {
       return json(c, { success: false, message: 'Invalid email format' }, { status: 400 })
     }
     const userConfig = DEMO_USERS[email]
+
+    const existingLoginState = failedLogins.get(clientIP)
+    if (existingLoginState?.lockedUntil && Date.now() < existingLoginState.lockedUntil) {
+      const retryAfter = Math.ceil((existingLoginState.lockedUntil - Date.now()) / 1000)
+      return json(c, { success: false, message: 'Account temporarily locked due to too many failed attempts.', retryAfter }, { status: 429, headers: { 'Retry-After': retryAfter.toString() } })
+    }
+
     const passwordValid = userConfig ? constantTimeEqual(password, userConfig.password) : constantTimeEqual(password, 'dummy')
     if (!passwordValid) {
       const loginState = failedLogins.get(clientIP) || { attempts: 0 }
@@ -237,8 +244,8 @@ app.post('/items', async (c) => {
       lowStockThreshold: data.lowStockThreshold,
       category: data.category ?? null,
       expiryDate: data.expiryDate ?? null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     }).returning()
     return json(c, { success: true, data: resultData[0] }, { status: 201 })
   } catch (error) {
@@ -290,7 +297,7 @@ app.put('/items/:id', async (c) => {
         }, { status: 409 })
       }
     }
-    const updateData: Record<string, unknown> = { updatedAt: new Date() }
+    const updateData: Record<string, unknown> = { updatedAt: Date.now() }
     if (data.name !== undefined) updateData.name = data.name
     if (data.itemCode !== undefined) updateData.itemCode = data.itemCode
     if (data.price !== undefined) updateData.price = data.price
@@ -338,10 +345,10 @@ app.get('/sales', async (c) => {
       invoiceNumber: sales.invoiceNumber,
       createdAt: sales.createdAt
     })
-    .from(sales)
-    .orderBy(desc(sales.saleDate))
-    .limit(limit)
-    .offset(offset)
+      .from(sales)
+      .orderBy(desc(sales.saleDate))
+      .limit(limit)
+      .offset(offset)
     const [totalResult] = await db.select({ count: count() }).from(sales)
     const total = totalResult?.count || 0
     return json(c, {
@@ -384,8 +391,8 @@ app.post('/sales', async (c) => {
         saleItemsData.push({ itemId: item.itemId, quantity: item.quantity, unitPrice: item.unitPrice, totalPrice: item.totalPrice, name: itemExists.name, currentStock: itemExists.stockQuantity })
         totalAmount += item.totalPrice
       }
-      const saleDate = req.saleDate ? new Date(req.saleDate) : new Date()
-      const now = new Date()
+      const saleDate = req.saleDate ? new Date(req.saleDate).getTime() : Date.now()
+      const now = Date.now()
       const saleResult = await tx.insert(sales).values({
         saleDate,
         totalAmount,
@@ -439,11 +446,11 @@ app.get('/sales/top-selling', async (c) => {
     totalQuantity: sum(saleItems.quantity).mapWith(Number),
     totalRevenue: sum(saleItems.totalPrice).mapWith(Number)
   })
-  .from(saleItems)
-  .innerJoin(items, eq(saleItems.itemId, items.id))
-  .groupBy(saleItems.itemId)
-  .orderBy(desc(sum(saleItems.quantity)))
-  .limit(limit)
+    .from(saleItems)
+    .innerJoin(items, eq(saleItems.itemId, items.id))
+    .groupBy(saleItems.itemId)
+    .orderBy(desc(sum(saleItems.quantity)))
+    .limit(limit)
   return json(c, { success: true, data: topSelling })
 })
 
@@ -459,7 +466,7 @@ app.get('/dashboard', async (c) => {
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      const recentSales = await db.select({ saleId: saleItems.saleId, itemId: saleItems.itemId }).from(saleItems).innerJoin(sales, eq(saleItems.saleId, sales.id)).where(gte(sales.saleDate, thirtyDaysAgo))
+      const recentSales = await db.select({ saleId: saleItems.saleId, itemId: saleItems.itemId }).from(saleItems).innerJoin(sales, eq(saleItems.saleId, sales.id)).where(gte(sales.saleDate, thirtyDaysAgo.getTime()))
       const soldItemIds = new Set(recentSales.map(s => s.itemId))
       for (const item of allItems) {
         if (item.stockQuantity === 0) {
@@ -504,11 +511,11 @@ app.get('/dashboard', async (c) => {
     const [itemCountResult] = await db.select({ count: count() }).from(items)
     const [lowStockItems] = await db.select({ count: count() }).from(items).where(sql`${items.stockQuantity} <= ${items.lowStockThreshold}`)
     const [outOfStockItems] = await db.select({ count: count() }).from(items).where(eq(items.stockQuantity, 0))
-    const [todaySales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, today))
-    const [todayTransactionCount] = await db.select({ count: count() }).from(sales).where(gte(sales.saleDate, today))
-    const [weekSales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, weekAgo))
-    const [monthSales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, monthAgo))
-    const [recentSales] = await db.select({ id: sales.id, saleDate: sales.saleDate, totalAmount: sales.totalAmount, invoiceNumber: sales.invoiceNumber, customerName: sales.customerName }).from(sales).orderBy(desc(sales.saleDate)).limit(5)
+    const [todaySales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, today.getTime()))
+    const [todayTransactionCount] = await db.select({ count: count() }).from(sales).where(gte(sales.saleDate, today.getTime()))
+    const [weekSales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, weekAgo.getTime()))
+    const [monthSales] = await db.select({ total: sum(sales.totalAmount).mapWith(Number) }).from(sales).where(gte(sales.saleDate, monthAgo.getTime()))
+    const recentSales = await db.select({ id: sales.id, saleDate: sales.saleDate, totalAmount: sales.totalAmount, invoiceNumber: sales.invoiceNumber, customerName: sales.customerName }).from(sales).orderBy(desc(sales.saleDate)).limit(5)
     const overview = { totalSales: totalSalesResult?.total || 0, totalTransactions: totalTransactions?.count || 0, totalItems: itemCountResult?.count || 0, lowStockItems: lowStockItems?.count || 0, todaySales: todaySales?.total || 0, weekSales: weekSales?.total || 0, monthSales: monthSales?.total || 0 }
     return json(c, {
       success: true,
@@ -553,10 +560,10 @@ app.get('/dashboard/sales-trends', async (c) => {
     totalSales: sum(sales.totalAmount).mapWith(Number),
     transactionCount: count()
   })
-  .from(sales)
-  .where(gte(sales.saleDate, startDate))
-  .groupBy(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`)
-  .orderBy(asc(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`))
+    .from(sales)
+    .where(gte(sales.saleDate, startDate.getTime()))
+    .groupBy(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`)
+    .orderBy(asc(sql`DATE(${sales.saleDate} / 1000, 'unixepoch')`))
   return json(c, { success: true, data: salesTrends })
 })
 
@@ -844,7 +851,7 @@ app.post('/import/items', async (c) => {
   } catch (error) {
     console.error('Error importing items:', error)
     return json(c, { error: 'Failed to import items' }, { status: 500 })
-   }
+  }
 })
 
 export const GET: RequestHandler = async ({ request }) => {

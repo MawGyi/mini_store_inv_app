@@ -26,7 +26,7 @@ export async function GET() {
 
   try {
     const alerts: DashboardAlert[] = []
-    
+
     const allItems = await db.select({
       id: items.id,
       name: items.name,
@@ -36,26 +36,26 @@ export async function GET() {
       updatedAt: items.updatedAt,
       expiryDate: items.expiryDate
     }).from(items)
-    
+
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-    
+
     const thirtyDaysFromNow = new Date()
     thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
-    
+
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    
+
     const recentSales = await db.select({
       saleId: saleItems.saleId,
       itemId: saleItems.itemId
     })
-    .from(saleItems)
-    .innerJoin(sales, eq(saleItems.saleId, sales.id))
-    .where(gte(sales.saleDate, thirtyDaysAgo))
-    
+      .from(saleItems)
+      .innerJoin(sales, eq(saleItems.saleId, sales.id))
+      .where(gte(sales.saleDate, thirtyDaysAgo.getTime()))
+
     const soldItemIds = new Set(recentSales.map((s: any) => s.itemId))
-    
+
     for (const item of allItems) {
       if (item.stockQuantity === 0) {
         alerts.push({
@@ -68,8 +68,8 @@ export async function GET() {
           stockQuantity: item.stockQuantity
         })
       } else if (item.stockQuantity <= item.lowStockThreshold) {
-        const severity = item.stockQuantity <= 2 ? 'critical' : 
-                        item.stockQuantity <= Math.floor(item.lowStockThreshold / 2) ? 'high' : 'medium'
+        const severity = item.stockQuantity <= 2 ? 'critical' :
+          item.stockQuantity <= Math.floor(item.lowStockThreshold / 2) ? 'high' : 'medium'
         alerts.push({
           type: 'low_stock',
           message: `${item.name} is running low (${item.stockQuantity} remaining)`,
@@ -90,11 +90,11 @@ export async function GET() {
           stockQuantity: item.stockQuantity
         })
       }
-      
+
       if (item.expiryDate) {
         const expiryDate = new Date(item.expiryDate)
         const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-        
+
         if (daysUntilExpiry < 0) {
           alerts.push({
             type: 'expired',
@@ -123,7 +123,7 @@ export async function GET() {
         }
       }
     }
-    
+
     const sortedAlerts = alerts.sort((a, b) => {
       const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 }
       if (severityOrder[a.severity] !== severityOrder[b.severity]) {
@@ -131,7 +131,7 @@ export async function GET() {
       }
       return 0
     })
-    
+
     return json({ success: true, data: sortedAlerts })
   } catch (error) {
     console.error('Alerts error:', error)

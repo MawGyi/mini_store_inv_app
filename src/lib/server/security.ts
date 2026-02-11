@@ -5,17 +5,17 @@ const maxAttempts = 5
 export function checkRateLimit(identifier: string): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now()
   const record = rateLimitStore.get(identifier)
-  
+
   if (!record || now > record.resetTime) {
     const newRecord = { count: 1, resetTime: now + rateLimitWindow }
     rateLimitStore.set(identifier, newRecord)
     return { allowed: true, remaining: maxAttempts - 1, resetTime: newRecord.resetTime }
   }
-  
+
   if (record.count >= maxAttempts) {
     return { allowed: false, remaining: 0, resetTime: record.resetTime }
   }
-  
+
   record.count++
   return { allowed: true, remaining: maxAttempts - record.count, resetTime: record.resetTime }
 }
@@ -32,13 +32,10 @@ export function cleanupRateLimitStore() {
 setInterval(cleanupRateLimitStore, rateLimitWindow)
 
 export function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
-  
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  const maxLen = Math.max(a.length, b.length)
+  let result = a.length ^ b.length
+  for (let i = 0; i < maxLen; i++) {
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
   }
   return result === 0
 }
@@ -59,24 +56,24 @@ export function validateEmail(email: string): boolean {
 export function validatePasswordStrength(password: string): { valid: boolean; score: number; errors: string[] } {
   const errors: string[] = []
   let score = 0
-  
+
   if (password.length >= 8) score++
   else errors.push('At least 8 characters')
-  
+
   if (password.length >= 12) score++
-  
+
   if (/[a-z]/.test(password)) score++
   else errors.push('Lowercase letter')
-  
+
   if (/[A-Z]/.test(password)) score++
   else errors.push('Uppercase letter')
-  
+
   if (/[0-9]/.test(password)) score++
   else errors.push('Number')
-  
+
   if (/[^a-zA-Z0-9]/.test(password)) score++
   else errors.push('Special character')
-  
+
   return { valid: score >= 4, score, errors }
 }
 

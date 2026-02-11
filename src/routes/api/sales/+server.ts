@@ -18,17 +18,17 @@ function isDbAvailable() {
 
 export async function GET({ url }: { url: URL }) {
   if (!isDbAvailable()) {
-    return json({ 
-      success: false, 
-      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    return json({
+      success: false,
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.'
     }, { status: 503 })
   }
-  
+
   try {
     const page = parseInt(url.searchParams.get('page') || '1')
     const limit = parseInt(url.searchParams.get('limit') || '10')
     const offset = (page - 1) * limit
-    
+
     const allSales = await db.select({
       id: sales.id,
       saleDate: sales.saleDate,
@@ -38,14 +38,14 @@ export async function GET({ url }: { url: URL }) {
       invoiceNumber: sales.invoiceNumber,
       createdAt: sales.createdAt
     })
-    .from(sales)
-    .orderBy(desc(sales.saleDate))
-    .limit(limit)
-    .offset(offset)
-    
+      .from(sales)
+      .orderBy(desc(sales.saleDate))
+      .limit(limit)
+      .offset(offset)
+
     const [totalResult] = await db.select({ count: count() }).from(sales)
     const total = totalResult?.count || 0
-    
+
     return json({
       success: true,
       data: allSales,
@@ -59,17 +59,17 @@ export async function GET({ url }: { url: URL }) {
 
 export async function POST({ request }: { request: Request }) {
   if (!isDbAvailable()) {
-    return json({ 
-      success: false, 
-      error: 'Database not available. Please configure POSTGRES_URL environment variable.' 
+    return json({
+      success: false,
+      error: 'Database not available. Please configure POSTGRES_URL environment variable.'
     }, { status: 503 })
   }
-  
+
   try {
     const body: unknown = await request.json()
-    
+
     const parseResult = SaleSchema.safeParse(body)
-    
+
     if (!parseResult.success) {
       const errors = formatZodError(parseResult.error)
       return json({
@@ -159,8 +159,8 @@ export async function POST({ request }: { request: Request }) {
         totalAmount += item.totalPrice
       }
 
-      const saleDate = req.saleDate ? new Date(req.saleDate) : new Date()
-      const now = new Date()
+      const saleDate = req.saleDate ? new Date(req.saleDate).getTime() : Date.now()
+      const now = Date.now()
 
       const saleResult = await tx.insert(sales).values({
         saleDate,
@@ -257,7 +257,7 @@ export async function POST({ request }: { request: Request }) {
     }, { status: 201 })
   } catch (error) {
     console.error('Error creating sale:', error)
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Failed to create sale'
     return json({ success: false, error: errorMessage }, { status: 400 })
   }
